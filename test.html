@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="http://code.jquery.com/jquery-2.2.0.min.js"></script>
+</head>
+<body style="width: 100vw; height: 100vh;display: flex;">
+    <div id="player1"></div>
+    <div id="player2" style="display: none;"></div>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        var player1, player2;
+        window.onYouTubeIframeAPIReady = function(){
+            player1 = new YT.Player('player1', {
+                height: 300,
+                width: 600,
+                playerVars: {
+                    autohide: 2,
+                    autoplay: 1,
+                    controls: 0,
+                    fs: 0,
+                    loop: 1,
+                    modestbranding: 0,
+                    rel: 0,
+                    showinfo: 0
+                },
+                events: {
+                    onReady: onPlayerReady1,
+                    onStateChange: onPlayerStateChange1
+                }
+            });
+
+            player2 = new YT.Player('player2', {
+                height: 300,
+                width: 600,
+                playerVars: {
+                    autohide: 2,
+                    autoplay: 1,
+                    controls: 0,
+                    fs: 0,
+                    loop: 1,
+                    modestbranding: 0,
+                    rel: 0,
+                    showinfo: 0
+                },
+                events: {
+                    onReady: onPlayerReady2,
+                    onStateChange: onPlayerStateChange2
+                }
+            });
+        };
+
+        var dfd1 = $.Deferred(),
+            dfd2 = $.Deferred();
+
+        function onPlayerReady1() {
+            dfd1.resolve();
+        }
+
+        function onPlayerReady2() {
+            player2.mute();
+            dfd2.resolve();
+        }
+
+
+        function onPlayerStateChange1(e) {
+            if (e.data == YT.PlayerState.ENDED) {
+                player2.getIframe().style.display = 'block';
+                player2.playVideo();
+                player2.unMute();
+                player1.destroy();
+            }
+        }
+
+        function onPlayerStateChange2() {
+        }
+
+
+        function player1Ready() {
+            return dfd1.promise();
+        }
+
+        function player2Ready() {
+            return dfd2.promise();
+        }
+
+        $.when(player1Ready(), player2Ready()).then(function() {
+            player1.loadVideoById({
+                videoId:"5mKFLuqcjrY",
+                startSeconds: 165
+            });
+            player2.loadVideoById({
+                videoId:"qnU45zHGEak"
+            });
+            setTimeout(function() {
+                player2.pauseVideo();
+            }, 0.3);
+        });
+    </script>
+</body>
+</html>

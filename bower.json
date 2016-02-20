@@ -1,0 +1,21 @@
+{
+  "name": "youtubeplayer",
+  "description": "",
+  "main": "index.js",
+  "authors": [
+    "Alex Chertin <alex@opentech.co.il>"
+  ],
+  "license": "ISC",
+  "moduleType": [],
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+  }
+}
