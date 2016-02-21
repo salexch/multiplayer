@@ -11,7 +11,22 @@
 
     AggPlayer.debug(true);
 
-    var player = new AggPlayer.Player('player', {});
+    var player = new AggPlayer.Player('player', {
+        playerVars: {
+            autohide: 2,
+            autoplay: 1,
+            //controls: 0,
+            fs: 0,
+            loop: 1,
+            modestbranding: 0,
+            rel: 0,
+            showinfo: 0
+        },
+/*        events: {
+            onReady: onPlayerReady2,
+            onStateChange: onPlayerStateChange2
+        }*/
+    });
 
     function onPlayerReady() {
 

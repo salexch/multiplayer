@@ -74,7 +74,25 @@ module.exports = (function() {
 
                 elem.style.display = 'none';
 
-                 var player = new window.YT.Player(elem, {
+                var player = new window.YT.Player(elem, params);
+
+                player.addEventListener('onReady', function() {
+                    player.play_stop_dfd = Q.defer();
+                    player.bufferVideoById = bufferVideoById.bind(player);
+                    player.playVideoById = playVideoById.bind(player);
+                    player.continuePlay = continuePlay.bind(player);
+                    player.whenVideoEnd = whenVideoEnd.bind(player);
+
+                    player_dfd.resolve(player/*new Player(player, params)*/);
+                });
+
+                player.addEventListener('onStateChange', function(e) {
+                    if (window.YT.PlayerState.ENDED == e.data)
+                        this.play_stop_dfd.resolve();
+                }.bind(player));
+
+
+/*                 var player = new window.YT.Player(elem, {
                     events: {
                         'onReady': function() {
 
@@ -88,10 +106,10 @@ module.exports = (function() {
                                     this.play_stop_dfd.resolve();
                             }.bind(player));
 
-                            player_dfd.resolve(player/*new Player(player, params)*/);
+                            player_dfd.resolve(player/!*new Player(player, params)*!/);
                         }
                     }
-                });
+                });*/
 
                 return player_dfd.promise;
             });
