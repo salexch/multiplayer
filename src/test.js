@@ -16,7 +16,7 @@
             autohide: 2,
             autoplay: 1,
             //controls: 0,
-            fs: 0,
+            fs: 1,
             loop: 1,
             modestbranding: 0,
             rel: 0,
@@ -26,6 +26,8 @@
             onReady: onPlayerReady2,
             onStateChange: onPlayerStateChange2
         }*/
+    }, {
+        useTransition: 'parallelogram'
     });
 
     function onPlayerReady() {

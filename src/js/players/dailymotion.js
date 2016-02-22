@@ -36,26 +36,34 @@ module.exports = (function() {
             return isAPIReady().then(function() {
                 var player_dfd = Q.defer();
 
-                elem.style.display = 'none';
+                //elem.style.display = 'none';
 
-                var player = new window.DM.player(elem, {
-                    events: {
-                        'onReady': function() {
-
-                            player.play_stop_dfd = Q.defer();
-                            player.bufferVideoById = bufferVideoById.bind(player);
-                            player.playVideoById = playVideoById.bind(player);
-                            player.continuePlay = continuePlay.bind(player);
-                            player.whenVideoEnd = whenVideoEnd.bind(player);
-                            player.addEventListener('onStateChange', function(e) {
-                                if (window.YT.PlayerState.ENDED == e.data)
-                                    this.play_stop_dfd.resolve();
-                            }.bind(player));
-
-                            player_dfd.resolve(player/*new Player(player, params)*/);
-                        }
+                var dm_player_params = {
+                    params: {
+                        'sharing-enable': false,
                     }
-                });
+                };
+                dm_player_params.width = params.width;
+                dm_player_params.height = params.height;
+                if (params.playerVars && 'object' == typeof params.playerVars) {
+
+                    if (params.playerVars.autoplay)
+                        dm_player_params.params.autoplay = params.playerVars.autoplay;
+
+                    if (params.playerVars.controls)
+                        dm_player_params.params.controls = params.playerVars.controls;
+
+                    if (params.playerVars.rel)
+                        dm_player_params.params['endscreen-enable'] = params.playerVars.rel;
+
+                    if (params.playerVars.modestbranding)
+                        dm_player_params.params['ui-logo'] = params.playerVars.modestbranding;
+
+                    if (params.playerVars.showinfo)
+                        dm_player_params.params['ui-start_screen_info'] = params.playerVars.showinfo;
+                }
+
+                var player = new window.DM.player(elem, dm_player_params);
 
                 return player_dfd.promise;
             });

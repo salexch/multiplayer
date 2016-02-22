@@ -72,7 +72,7 @@ module.exports = (function() {
             return isAPIReady().then(function() {
                 var player_dfd = Q.defer();
 
-                elem.style.display = 'none';
+                //elem.style.display = 'none';
 
                 var player = new window.YT.Player(elem, params);
 
@@ -90,26 +90,6 @@ module.exports = (function() {
                     if (window.YT.PlayerState.ENDED == e.data)
                         this.play_stop_dfd.resolve();
                 }.bind(player));
-
-
-/*                 var player = new window.YT.Player(elem, {
-                    events: {
-                        'onReady': function() {
-
-                            player.play_stop_dfd = Q.defer();
-                            player.bufferVideoById = bufferVideoById.bind(player);
-                            player.playVideoById = playVideoById.bind(player);
-                            player.continuePlay = continuePlay.bind(player);
-                            player.whenVideoEnd = whenVideoEnd.bind(player);
-                            player.addEventListener('onStateChange', function(e) {
-                                if (window.YT.PlayerState.ENDED == e.data)
-                                    this.play_stop_dfd.resolve();
-                            }.bind(player));
-
-                            player_dfd.resolve(player/!*new Player(player, params)*!/);
-                        }
-                    }
-                });*/
 
                 return player_dfd.promise;
             });
