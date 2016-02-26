@@ -2,13 +2,12 @@
  * Created by alex on 2/15/2016.
  */
 
+var Q = require('q');
+var _ = require('lodash');
 
 module.exports = (function() {
 
     var debug = false;
-
-    var Q = require('q');
-    var _ = require('lodash');
 
     function debugLog() {
         if (debug)
@@ -16,10 +15,10 @@ module.exports = (function() {
     }
 
 
-    function removeEmptyPlayerPlaceholders() {
+    function removeEmptyPlayerContainers() {
         var divs = this.wrapper.querySelectorAll('div');
         for(var i =0; i< divs.length; i++)
-            this.wrapper.removeChild(divs[i]);
+            this._wrapper.removeChild(divs[i]);
     }
 
 
@@ -27,33 +26,41 @@ module.exports = (function() {
         if ('string' == typeof element)
             element = document.getElementById(element);
 
-        this.players = [];
+        this._players = [];
 
-        this.anim = {
+        this._anim = {
+            current: null,
+            transitions: [],
             show: function() {},
             hide: function() {}
         };
 
-        this.wrapper = element;
-        this.player_params = player_params;
+        this._wrapper = element;
+        this._player_params = player_params;
+        this._playlist_index = 0;
+        this._playlist = [];
+        this._mute = 0;
+        this._loop = 0;
+        this._shuffle = 0;
+        this._events = [];
 
-/*
-        this.player_params.width = this.wrapper.offsetWidth;
-        this.player_params.height = this.wrapper.offsetHeight;
-*/
-        this.player_params.width = '100%';
-        this.player_params.height = '100%';
+        this._player_params.width = '100%';
+        this._player_params.height = '100%';
 
 
         if (options && options.useTransition) {
-            //var anim = this.anim = require('./transitions/transitions.js')(this.wrapper, 'circle');
-            var anim = this.anim = require('./transitions/' + options.useTransition + '.js')(this.wrapper);
-/*            setTimeout(function() {
-                anim.show();
-                setTimeout(function() {
-                    anim.hide();
-                }, 2000);
-            }, 5000);*/
+            this._anim.transitions = options.useTransition.map(function(transition_name) {
+                return require('./transitions/' + transition_name + '.js')(this._wrapper);
+            }.bind(this));
+
+            this._anim.show = function() {
+                this.current = _.shuffle(this.transitions)[0];
+                this.current.show();
+            };
+
+            this._anim.hide = function() {
+                this.current.hide();
+            };
         }
     };
 
@@ -74,73 +81,224 @@ module.exports = (function() {
         return player_elem;
     }
 
+    function _playVideoAt(index) {
+        var video = this._playlist[index];
+
+        if (!video && this._loop) {
+            this._playlist_index = 0;
+            video = this._playlist[0];
+        }
+
+        if (video) {
+            var player_elem = _createPlayerElem();
+            this._wrapper.appendChild(player_elem);
+            require('./players/' + video.api + '.js').createPlayer(player_elem, this._player_params).then(function(player) {
+                if (this._mute)
+                    player.mute();
+                this._players.push(player);
+                player.bufferVideoById(video.id);
+                _playList.call(this);
+            }.bind(this));
+        }
+    }
+
+    function _attachEvents() {
+        if (this._events.length)
+            this._events.forEach(function(event) {
+                this._players[0].addEventListener(event.event, event.listener);
+            }.bind(this));
+    }
+
     function _playList() {
-        var that = this;
-        this.players[0].whenVideoEnd().then(function() {
-            that.anim.show();
-            that.players[1].continuePlay();
-            that.players[0].destroy();
-            that.players.shift();
-            //Q.delay(1000).then(that.anim.hide);
-            setTimeout(function() {
-                that.anim.hide();
-            }, 1000);
+        this._players[0].whenVideoEnd().then(function() {
+            this._anim.show();
+            this._players[1].whenStartPlaying().then(function() {
+                this._playlist_index++;
+                this._anim.hide();
+                if (!this._mute)
+                    this._players[1].unMute();
+            }.bind(this));
+            this._players[1].continuePlay();
+            this._players[0].destroy();
+            this._players.shift();
+
+            _attachEvents.call(this);
+
             //TODO: find why it's not working!
             //removeEmptyPlayerPlaceholders().call(that);
 
-            var video = that.playlist.shift();
-            if (video) {
-                var player_elem = _createPlayerElem();
-                that.wrapper.appendChild(player_elem);
-                require('./players/' + video.api + '.js').createPlayer(player_elem, that.player_params).then(function(player) {
-                    that.players.push(player);
-                    player.bufferVideoById(video.id);
-                    _playList.call(that);
-                });
-            }
-        });
+            _playVideoAt.call(this, this._playlist_index + 2);
+        }.bind(this));
     }
 
     player.prototype.loadPlaylist = function(params) {
         if (params.list.length < 1)
             return false;
 
-        if (params.list.length == 1)
-            return this.loadVideoById(params.list.pop());
+        this._playlist = params.list || [];
+        this.setShuffle(this._shuffle);
 
+        this._playlist_index = 0;
 
-        this.playlist = params.list;
+        var  init_playlist = this._playlist.slice(0,2);
 
-        var video1 = this.playlist.shift(),
-            player1_elem = _createPlayerElem();
+        var players_dfd = init_playlist.map(function(video) {
+            var player_elem = _createPlayerElem();
 
-        this.wrapper.appendChild(player1_elem);
+            this._wrapper.appendChild(player_elem);
 
-        var player1 = require('./players/' + video1.api + '.js').createPlayer(player1_elem, this.player_params);
+            return require('./players/' + video.api + '.js').createPlayer(player_elem, this._player_params);
+        }.bind(this));
 
-        var video2 = this.playlist.shift(),
-            player2_elem = _createPlayerElem();
-
-        this.wrapper.appendChild(player2_elem);
-
-        var player2 = require('./players/' + video2.api + '.js').createPlayer(player2_elem, this.player_params);
-
-        var that = this;
-
-        Q.all([
-            player1,
-            player2
-        ]).then(function(res) {
+        Q.all(players_dfd).then(function(res) {
             res.forEach(function(player) {
-                that.players.push(player);
-            });
-            that.players[0].playVideoById(video1.id);
-            that.players[1].bufferVideoById(video2.id);
-            _playList.call(that);
+                if (this._mute)
+                    player.mute();
+                this._players.push(player);
+            }.bind(this));
+
+            this._players[0].playVideoById(init_playlist[0].id);
+            if (this._players[1])
+                this._players[1].bufferVideoById(init_playlist[1].id);
+
+            _playList.call(this);
+        }.bind(this));
+    };
+
+    player.prototype.playVideo = function() {
+        this._players[0].playVideo();
+    };
+
+    player.prototype.pauseVideo = function() {
+        this._players[0].pauseVideo();
+    };
+
+    player.prototype.stopVideo = function() {
+        this._players[0].stopVideo();
+    };
+
+    player.prototype.seekTo = function(seconds, allowSeekAhead) {
+        this._players[0].seekTo(seconds, allowSeekAhead);
+    };
+
+    player.prototype.nextVideo = function() {
+        this.playVideoAt(this._playlist_index + 1);
+    };
+
+    player.prototype.previousVideo = function() {
+        this.playVideoAt(this._playlist_index - 1);
+    };
+
+    player.prototype.playVideoAt = function(index) {
+        if (!this._playlist || !this._playlist.length || !this._playlist[index])
+            return false;
+
+        this._playlist_index = index - 1;
+        this.stopVideo();
+    };
+
+    player.prototype.loadVideoById = function(params) {
+        var data = {
+            id: params.id,
+            api: params.api
+        };
+
+        //TODO: cleanup
+        this._playlist = [];
+        this._playlist_index = 0;
+
+
+        if (this._players.length && (this._players[0].isPlaying() || this._players[0].isPaused())) {
+            this._playlist = [data];
+            this.stopVideo();
+
+            return false;
+        }
+
+        this._wrapper.innerHTML = '';
+
+        var playlist = [data];
+
+        if (this._loop)
+            playlist.push(data);
+
+        this.loadPlaylist(playlist);
+    };
+
+    player.prototype.mute = function() {
+        this._mute = 1;
+    };
+
+    player.prototype.unMute = function() {
+        this._mute = 0;
+    };
+
+    player.prototype.setLoop = function(is_loop) {
+        this._loop = !!is_loop;
+    };
+
+    player.prototype.setShuffle = function(is_shuffle) {
+        this._shuffle = !!is_shuffle;
+        if (this._shuffle)
+            this._playlist = _.shuffle(this._playlist);
+    };
+
+    player.prototype.getCurrentTime = function() {
+        return this._players[0].getCurrentTime();
+    };
+
+    player.prototype.getDuration = function() {
+        return this._players[0].getDuration();
+    };
+
+    player.prototype.getVideoLoadedFraction = function() {
+        return this._players[0].getVideoLoadedFraction();
+    };
+
+    player.prototype.getPlaylistIndex = function() {
+        return this._playlist_index;
+    };
+
+    player.prototype.addEventListener = function(event, listener) {
+        this._events.push({
+            event: event,
+            listener: listener
         });
+
+        //this._players[0].addEventListener(event, listener);
+        _attachEvents.call(this);
+    };
+
+    player.prototype.removeEventListener = function(event, listener) {
+        for (var i = 0; i < this._events.length; i++)
+            if (this._events[i].event == event)
+                break;
+
+        var remove = this._events.splice(i, 1);
+
+        this._players[0].removeEventListener(remove.event, remove.listener);
+    };
+
+    player.prototype.destroy = function() {
+        this._playlist = [];
+        this._playlist_index = 0;
+        this._loop = false;
+        this._shuffle = false;
+        this._players.forEach(function(player) {
+            player.destroy();
+        });
+        this._players = [];
+        this._wrapper.innerHTML = '';
+        this._events = [];
     };
 
 
+
+
+
+    player.prototype.onPlayTimeChange = function() {
+
+    };
 
     return {
         debug: function(is_debug) {

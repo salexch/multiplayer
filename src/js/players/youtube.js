@@ -57,13 +57,30 @@ module.exports = (function() {
 
 
     function continuePlay() {
-        this.unMute();
+        //this.unMute();
         this.playVideo();
         this.getIframe().style.display = 'block';
     }
 
     function whenVideoEnd() {
         return this.play_stop_dfd.promise;
+    }
+
+    function whenStartPlaying() {
+        if (this.play_back_dfd)
+            this.play_back_dfd.reject();
+
+        this.play_back_dfd = Q.defer();
+
+        return this.play_back_dfd.promise;
+    }
+
+    function isPlaying() {
+        return this.getPlayerState() == window.YT.PlayerState.PLAYING;
+    }
+
+    function isPaused() {
+        return this.getPlayerState() == window.YT.PlayerState.PAUSED;
     }
 
 
@@ -82,6 +99,9 @@ module.exports = (function() {
                     player.playVideoById = playVideoById.bind(player);
                     player.continuePlay = continuePlay.bind(player);
                     player.whenVideoEnd = whenVideoEnd.bind(player);
+                    player.whenStartPlaying = whenStartPlaying.bind(player);
+                    player.isPlaying = isPlaying.bind(player);
+                    player.isPaused = isPaused.bind(player);
 
                     player_dfd.resolve(player/*new Player(player, params)*/);
                 });
@@ -89,6 +109,10 @@ module.exports = (function() {
                 player.addEventListener('onStateChange', function(e) {
                     if (window.YT.PlayerState.ENDED == e.data)
                         this.play_stop_dfd.resolve();
+                    else if (window.YT.PlayerState.PLAYING == e.data) {
+                        if (this.play_back_dfd)
+                            this.play_back_dfd.resolve();
+                    }
                 }.bind(player));
 
                 return player_dfd.promise;

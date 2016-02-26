@@ -27,7 +27,21 @@
             onStateChange: onPlayerStateChange2
         }*/
     }, {
-        useTransition: 'parallelogram'
+        useTransition: [
+            'circle',
+            'curtain',
+            'frame-it',
+            'jammed-blind',
+            'lateral-swipe',
+            'lazy-stretch',
+            'origami',
+            'parallelogram',
+            'spill',
+            'tilted',
+            'tunnel-vision',
+            'wave',
+            'widescreen-wiper'
+        ]
     });
 
     function onPlayerReady() {
