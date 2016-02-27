@@ -103,7 +103,7 @@ module.exports = (function() {
     }
 
     function _attachEvents() {
-        if (this._events.length)
+        if (this._events.length && this._players.length && this._players[0])
             this._events.forEach(function(event) {
                 this._players[0].addEventListener(event.event, event.listener);
             }.bind(this));
@@ -157,6 +157,7 @@ module.exports = (function() {
                 this._players.push(player);
             }.bind(this));
 
+            _attachEvents.call(this);
             this._players[0].playVideoById(init_playlist[0].id);
             if (this._players[1])
                 this._players[1].bufferVideoById(init_playlist[1].id);
@@ -293,7 +294,9 @@ module.exports = (function() {
     };
 
 
+    player.prototype.onStartPlaying = function() {
 
+    };
 
 
     player.prototype.onPlayTimeChange = function() {

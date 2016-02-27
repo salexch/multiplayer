@@ -5,7 +5,7 @@
 
     var AggPlayer = require('./../dist/player.js');
     //var AggPlayer = require('./../test/player.js');
-    AggPlayer = window.AggPlayer;
+    AggPlayer = window.MultiPlayer;
     console.log('player', AggPlayer);
 
 
