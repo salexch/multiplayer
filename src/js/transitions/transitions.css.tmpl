@@ -1,5 +1,5 @@
 .<%= class_name %> {
-  position: fixed;
+  position: absolute;
   width: 100%;
   height: 100%;
   top: 0;
@@ -9,6 +9,7 @@
 
 .<%= class_name %>.show {
   visibility: visible;
+  background: #000000;
 }
 
 .<%= class_name %> svg {
@@ -19,13 +20,13 @@
 }
 
 .<%= class_name %> svg path {
-  fill: #fff;
+  fill: rgba(0, 0, 0, 0);
 }
 
 .<%= class_name %>::after,
 .<%= class_name %>::before {
   content: '';
-  position: fixed;
+  position: absolute;
   width: 20px;
   height: 20px;
   top: 50%;
