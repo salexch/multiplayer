@@ -138,9 +138,11 @@ module.exports = (function() {
         this._playlist = params.list || [];
         this.setShuffle(this._shuffle);
 
-        this._playlist_index = 0;
+        this._playlist_index = ~~(params.index || 0);
+        if (this._playlist_index >= this._playlist.length)
+            this._playlist_index = 0;
 
-        var  init_playlist = this._playlist.slice(0,2);
+        var  init_playlist = this._playlist.slice(this._playlist_index, 2);
 
         var players_dfd = init_playlist.map(function(video) {
             var player_elem = _createPlayerElem();
@@ -245,7 +247,11 @@ module.exports = (function() {
     };
 
     player.prototype.getCurrentTime = function() {
-        return this._players[0].getCurrentTime();
+        try {
+            return this._players[0].getCurrentTime();
+        } catch (e) {
+            return 0;
+        }
     };
 
     player.prototype.getDuration = function() {
