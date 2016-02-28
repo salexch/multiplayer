@@ -93,8 +93,6 @@ module.exports = (function() {
             var player_elem = _createPlayerElem();
             this._wrapper.appendChild(player_elem);
             require('./players/' + video.api + '.js').createPlayer(player_elem, this._player_params).then(function(player) {
-                if (this._mute)
-                    player.mute();
                 this._players.push(player);
                 player.bufferVideoById(video.id);
                 _playList.call(this);
@@ -115,9 +113,9 @@ module.exports = (function() {
             this._players[1].whenStartPlaying().then(function() {
                 this._playlist_index++;
                 this._anim.hide();
-                if (!this._mute)
-                    this._players[1].unMute();
             }.bind(this));
+            if (!this._mute)
+                this._players[1].unMute();
             this._players[1].continuePlay();
             this._players[0].destroy();
             this._players.shift();
