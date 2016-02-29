@@ -109,9 +109,11 @@ module.exports = (function() {
 
     function _playList() {
         this._players[0].whenVideoEnd().then(function() {
+            this._players[0].mute();
             this._anim.show();
+            this._playlist_index += 1;
             this._players[1].whenStartPlaying().then(function() {
-                this._playlist_index++;
+                //console.debug('Playing video at ', this._playlist_index);
                 this._anim.hide();
             }.bind(this));
             if (!this._mute)
@@ -139,6 +141,11 @@ module.exports = (function() {
         this._playlist_index = ~~(params.index || 0);
         if (this._playlist_index >= this._playlist.length)
             this._playlist_index = 0;
+
+
+        var is_active = this._players.length && (this._players[0].isPlaying() || this._players[0].isPaused());
+        if (is_active)
+            this.destroy();
 
         var  init_playlist = this._playlist.slice(this._playlist_index, 2);
 
@@ -194,8 +201,10 @@ module.exports = (function() {
         if (!this._playlist || !this._playlist.length || !this._playlist[index])
             return false;
 
-        this._playlist_index = index - 1;
-        this.stopVideo();
+        this._players[1].bufferVideoById(this._playlist[index].id).then(function() {
+            this._playlist_index = index - 1;
+            this._players[0].emulateEvent(0); //ended
+        }.bind(this));
     };
 
     player.prototype.loadVideoById = function(params) {

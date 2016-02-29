@@ -42,12 +42,16 @@ module.exports = (function() {
 
 
     function bufferVideoById(id) {
+        var dfd = Q.defer();
         this.getIframe().style.display = 'none';
         this.mute();
         this.loadVideoById(id);
         setTimeout(function() {
             this.pauseVideo();
+            dfd.resolve();
         }.bind(this), 0.5);
+
+        return dfd.promise;
     }
 
     function playVideoById(id) {
@@ -83,6 +87,12 @@ module.exports = (function() {
         return this.getPlayerState() == window.YT.PlayerState.PAUSED;
     }
 
+    function emulateEvent(event) {
+        if (event == window.YT.PlayerState.ENDED)
+            try {
+                this.play_stop_dfd.resolve();
+            } catch (e) {}
+    }
 
     return {
         createPlayer: function(elem, params) {
@@ -102,6 +112,8 @@ module.exports = (function() {
                     player.whenStartPlaying = whenStartPlaying.bind(player);
                     player.isPlaying = isPlaying.bind(player);
                     player.isPaused = isPaused.bind(player);
+
+                    player.emulateEvent = emulateEvent.bind(player);
 
                     player_dfd.resolve(player/*new Player(player, params)*/);
                 });
