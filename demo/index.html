@@ -4,6 +4,7 @@
     <title>My Uploads</title>
     <link rel="stylesheet" type="text/css" href="style.css">
     <script src="../dist/player.js"></script>
+    <script src="//code.jquery.com/jquery-2.2.1.min.js"></script>
 </head>
 <body>
 <div id="login-container" class="pre-auth">
@@ -11,6 +12,13 @@
     Please <a href="#" id="login-link">authorize</a> to continue.
 </div>
 <div id="playlists">Playlists:<span>Loading..</span></div>
+<br/>
+<div>
+    <lable for="custom_playlist">Public Playlist</lable>
+    <input id="custom_playlist" value="PLkk05-S5KMvy6pLPittY5TTbAbzAO2n33">
+    <a style="cursor:pointer;" href="#" id="load_custom_playlist">Play</a>
+</div>
+<br/>
 <div id="player" style="width: 600px;height:400px;position:relative"></div>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 <script type="text/javascript" src="auth.js"></script>

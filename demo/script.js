@@ -4,7 +4,8 @@
 // Define some variables used to remember state.
 
 var playlist = [];
-var player;
+var player,
+    player_container = document.getElementById('player');
 
 
 // After the API loads, call a function to get the uploads playlist ID.
@@ -43,6 +44,25 @@ function handleAPILoaded() {
 }
 
 
+
+document.getElementById('load_custom_playlist').onclick = function() {
+    var playlistId = document.getElementById('custom_playlist').value;
+    if (!playlistId)
+        return;
+
+    player_container.innerHTML = 'Loading..';
+
+    $.get('https://www.googleapis.com/youtube/v3/playlistItems', {
+        part:'snippet',
+        playlistId: playlistId,
+        key: 'AIzaSyBtHXgAjEz4QU2XlzflJAmn7RHrkB_fo-U'
+    }).then(function(res) {
+        console.log(res.items);
+        playVideos(res.items)
+    });
+};
+
+
 // Retrieve the list of videos in the specified playlist.
 function requestVideoPlaylist(playlistId, pageToken) {
     $('#video-container').html('');
@@ -54,56 +74,62 @@ function requestVideoPlaylist(playlistId, pageToken) {
     if (pageToken) {
         requestOptions.pageToken = pageToken;
     }
+
+    player_container.innerHTML = 'Loading..';
+
     var request = gapi.client.youtube.playlistItems.list(requestOptions);
     request.execute(function(response) {
-        console.log(response.result.items);
-
-        playlist = response.result.items.map(function(item) {
-            return {
-                id: item.snippet.resourceId.videoId,
-                api: 'youtube'
-            }
-        });
-
-        try {
-            player.destroy();
-            document.getElementById('player').innerHTML = '';
-        } catch (e) {}
-
-        player = new MultiPlayer.Player('player', {
-            playerVars: {
-                autohide: 2,
-                autoplay: 1,
-                //controls: 0,
-                fs: 1,
-                loop: 1,
-                modestbranding: 0,
-                rel: 0,
-                showinfo: 0
-            }
-        }, {
-            useTransition: [
-                'circle',
-                'curtain',
-                'frame-it',
-                'jammed-blind',
-                'lateral-swipe',
-                'lazy-stretch',
-                'origami',
-                'parallelogram',
-                'spill',
-                'tilted',
-                'tunnel-vision',
-                'wave',
-                'widescreen-wiper'
-            ]
-        });
-
-        player.loadPlaylist({
-            list: playlist
-        });
+        playVideos(response.result.items);
     });
-
-
 }
 
+
+function playVideos(items) {
+    console.log(items);
+
+    playlist = items.map(function(item) {
+        return {
+            id: item.snippet.resourceId.videoId,
+            api: 'youtube'
+        }
+    });
+
+    try {
+        player.destroy();
+    } catch (e) {}
+
+    player_container.innerHTML = '';
+
+    player = new MultiPlayer.Player('player', {
+        playerVars: {
+            autohide: 2,
+            autoplay: 1,
+            //controls: 0,
+            fs: 1,
+            loop: 1,
+            modestbranding: 0,
+            rel: 0,
+            showinfo: 0
+        }
+    }, {
+        useTransition: [
+            'circle',
+            'curtain',
+            'frame-it',
+            'jammed-blind',
+            'lateral-swipe',
+            'lazy-stretch',
+            'origami',
+            'parallelogram',
+            'spill',
+            'tilted',
+            'tunnel-vision',
+            'wave',
+            'widescreen-wiper'
+        ]
+    });
+
+    player.loadPlaylist({
+        list: playlist
+    });
+}
