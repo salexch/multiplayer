@@ -135,6 +135,10 @@ module.exports = (function() {
         if (params.list.length < 1)
             return false;
 
+        var is_active = this._players.length && (this._players[0].isPlaying() || this._players[0].isPaused());
+        if (is_active)
+            this.destroy(true);
+
         this._playlist = params.list || [];
         this.setShuffle(this._shuffle);
 
@@ -143,11 +147,7 @@ module.exports = (function() {
             this._playlist_index = 0;
 
 
-        var is_active = this._players.length && (this._players[0].isPlaying() || this._players[0].isPaused());
-        if (is_active)
-            this.destroy();
-
-        var  init_playlist = this._playlist.slice(this._playlist_index, 2);
+        var init_playlist = this._playlist.slice(this._playlist_index, 2);
 
         var players_dfd = init_playlist.map(function(video) {
             var player_elem = _createPlayerElem();
@@ -293,17 +293,19 @@ module.exports = (function() {
         this._players[0].removeEventListener(remove.event, remove.listener);
     };
 
-    player.prototype.destroy = function() {
+    player.prototype.destroy = function(soft) {
         this._playlist = [];
         this._playlist_index = 0;
-        this._loop = false;
-        this._shuffle = false;
+        if (!soft) {
+            this._loop = false;
+            this._shuffle = false;
+            this._events = [];
+        }
         this._players.forEach(function(player) {
             player.destroy();
         });
         this._players = [];
         this._wrapper.innerHTML = '';
-        this._events = [];
     };
 
 
