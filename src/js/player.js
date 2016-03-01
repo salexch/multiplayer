@@ -127,7 +127,7 @@ module.exports = (function() {
             //TODO: find why it's not working!
             //removeEmptyPlayerPlaceholders().call(that);
 
-            _playVideoAt.call(this, this._playlist_index + 2);
+            _playVideoAt.call(this, this._playlist_index + 1);
         }.bind(this));
     }
 
