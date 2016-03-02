@@ -136,8 +136,8 @@ module.exports = (function() {
             return false;
 
         var is_active = this._players.length && (this._players[0].isPlaying() || this._players[0].isPaused());
-        if (is_active)
-            this.destroy(true);
+/*        if (is_active)
+            this.destroy(true);*/
 
         this._playlist = params.list || [];
         this.setShuffle(this._shuffle);
@@ -146,6 +146,14 @@ module.exports = (function() {
         if (this._playlist_index >= this._playlist.length)
             this._playlist_index = 0;
 
+        if (is_active) {
+            this._players[1].bufferVideoById(this._playlist[0].id).then(function() {
+                this._playlist_index = -1;
+                this._players[0].emulateEvent(0);
+            }.bind(this));
+
+            return false;
+        }
 
         var init_playlist = this._playlist.slice(this._playlist_index, 2);
 
