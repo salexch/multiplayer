@@ -1,0 +1,4 @@
+Here is your client ID
+118707263982-4dnobjvs2og3i3f8d47dip58o2c8drbq.apps.googleusercontent.com
+Here is your client secret
+s19H1h1L2kcuCXVjF_52ST17
