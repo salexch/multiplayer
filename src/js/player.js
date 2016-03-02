@@ -293,7 +293,7 @@ module.exports = (function() {
 
     player.prototype.removeEventListener = function(event, listener) {
         for (var i = 0; i < this._events.length; i++)
-            if (this._events[i].event == event)
+            if (this._events[i].event == event && ('' + this._events[i].listener) == ('' + listener))
                 break;
 
         var remove = this._events.splice(i, 1);
