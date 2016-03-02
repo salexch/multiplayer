@@ -60,6 +60,9 @@ function getQueryVariable(variable) {
     var playlistId = getQueryVariable('playlistid');
     player_container.innerHTML = 'Loading..';
 
+    if (location.protocol == 'file:')
+        playlistId = 'PLkk05-S5KMvy6pLPittY5TTbAbzAO2n33';
+
     $.get('https://www.googleapis.com/youtube/v3/playlistItems', {
         part:'snippet',
         playlistId: playlistId,
@@ -70,6 +73,7 @@ function getQueryVariable(variable) {
     });
 })();
 
+/*
 document.getElementById('load_custom_playlist').onclick = function() {
     var playlistId = document.getElementById('custom_playlist').value;
     if (!playlistId)
@@ -86,6 +90,7 @@ document.getElementById('load_custom_playlist').onclick = function() {
         playVideos(res.items)
     });
 };
+*/
 
 
 // Retrieve the list of videos in the specified playlist.
@@ -107,7 +112,6 @@ function requestVideoPlaylist(playlistId, pageToken) {
         playVideos(response.result.items);
     });
 }
-
 
 function playVideos(items) {
     console.log(items);
@@ -153,6 +157,17 @@ function playVideos(items) {
             'widescreen-wiper'
         ]
     });
+
+    player.setLoop(true);
+
+    function playerEvents(e) {
+        if (e.data == 1) {
+            document.querySelector('#logo').classList.add('small');
+            player.removeEventListener('onStateChange', playerEvents);
+        }
+    }
+
+    player.addEventListener('onStateChange', playerEvents);
 
     player.loadPlaylist({
         list: playlist
