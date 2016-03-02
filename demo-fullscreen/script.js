@@ -129,7 +129,7 @@ function playVideos(items) {
         playerVars: {
             autohide: 2,
             autoplay: 1,
-            //controls: 0,
+            controls: 0,
             fs: 1,
             loop: 1,
             modestbranding: 0,
