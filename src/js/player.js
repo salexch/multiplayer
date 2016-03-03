@@ -281,6 +281,10 @@ module.exports = (function() {
         return this._playlist_index;
     };
 
+    player.prototype.getPlayerState = function() {
+        return this._players[0].getPlayerState();
+    };
+
     player.prototype.addEventListener = function(event, listener) {
         this._events.push({
             event: event,
