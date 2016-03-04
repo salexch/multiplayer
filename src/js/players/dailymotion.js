@@ -184,6 +184,10 @@ module.exports = (function() {
 
                         return 1;
                     };
+                    player.destroy = function() {
+                        player.parentNode.removeChild(player);
+                        player = null;
+                    };
 
 
                     player.bufferVideoById = bufferVideoById.bind(player);
