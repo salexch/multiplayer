@@ -49,8 +49,62 @@ module.exports = (function() {
         });
     }
 
+    function bufferVideoById(id) {
+        var dfd = Q.defer();
+        this.style.display = 'none';
+        this.mute();
+        this.loadVideoById(id);
+        setTimeout(function() {
+            this.pauseVideo();
+            dfd.resolve();
+        }.bind(this), 0.5);
+
+        return dfd.promise;
+    }
+
+    function playVideoById(id) {
+        this.style.display = 'block';
+        this.loadVideoById(id);
+    }
+
+
+    function continuePlay() {
+        //this.unMute();
+        this.playVideo();
+        this.style.display = 'block';
+    }
+
+    function whenVideoEnd() {
+        return this.play_stop_dfd.promise;
+    }
+
+    function whenStartPlaying() {
+        if (this.play_back_dfd)
+            this.play_back_dfd.reject();
+
+        this.play_back_dfd = Q.defer();
+
+        return this.play_back_dfd.promise;
+    }
+
+    function isPlaying() {
+        return this.getPlayerState() == 1;
+    }
+
+    function isPaused() {
+        return this.getPlayerState() == 2;
+    }
+
+    function emulateEvent(event) {
+        if (event == 0)
+            try {
+                this.play_stop_dfd.resolve();
+            } catch (e) {}
+    }
+
     return {
         createPlayer: function(elem, params) {
+            console.debug('Player params', params);
             return isAPIReady().then(function() {
                 var player_dfd = Q.defer();
 
@@ -58,6 +112,7 @@ module.exports = (function() {
 
                 var dm_player_params = {
                     params: {
+                        'api': '1',
                         'sharing-enable': false,
                     }
                 };
@@ -65,62 +120,101 @@ module.exports = (function() {
                 dm_player_params.height = params.height;
                 if (params.playerVars && 'object' == typeof params.playerVars) {
 
-                    if (params.playerVars.autoplay)
-                        dm_player_params.params.autoplay = params.playerVars.autoplay;
+                    if ('undefined' != typeof params.playerVars.autoplay)
+                        dm_player_params.params.autoplay = !!params.playerVars.autoplay;
 
-                    if (params.playerVars.controls)
-                        dm_player_params.params.controls = params.playerVars.controls;
+                    if ('undefined' != typeof params.playerVars.controls)
+                        dm_player_params.params.controls = !!params.playerVars.controls;
 
-                    if (params.playerVars.rel)
-                        dm_player_params.params['endscreen-enable'] = params.playerVars.rel;
+                    if ('undefined' != typeof params.playerVars.rel)
+                        dm_player_params.params['endscreen-enable'] = !!params.playerVars.rel;
 
-                    if (params.playerVars.modestbranding)
-                        dm_player_params.params['ui-logo'] = params.playerVars.modestbranding;
+                    if ('undefined' != typeof params.playerVars.modestbranding)
+                        dm_player_params.params['ui-logo'] = !!params.playerVars.modestbranding;
 
-                    if (params.playerVars.showinfo)
-                        dm_player_params.params['ui-start_screen_info'] = params.playerVars.showinfo;
+                    if ('undefined' != typeof params.playerVars.showinfo)
+                        dm_player_params.params['ui-start_screen_info'] = !!params.playerVars.showinfo;
                 }
 
-                var player = new window.DM.player(elem, dm_player_params);
+                console.debug('Dailymotion player params', dm_player_params);
+                //return false;
+                var player = window.DM.player(elem, dm_player_params);
 
                 var oldEventListener = player.addEventListener;
 
+                var api_ready = false;
                 oldEventListener('apiready', function() {
+                    if (api_ready)
+                        return;
+
+                    api_ready = true;
+
+                    console.debug('api ready');
+
+                    player.play_stop_dfd = Q.defer();
+
+                    player.loadVideoById = function(id) {
+                        player.load(id, {
+                            autoplay: true
+                        });
+                    };
+                    player.playVideo = player.play;
+                    player.pauseVideo = player.pause;
+                    player.seekTo = player.seek;
+                    player.mute = function() {
+                        player.setMuted(true);
+                    };
+                    player.unMute = function() {
+                        player.setMuted(false);
+                    };
+                    player.getDuration = function() {
+                        return player.duration;
+                    };
+                    player.getDuration = function() {
+                        return player.duration;
+                    };
+                    player.getCurrentTime = function() {
+                      return player.currentTime;
+                    };
+                    player.getPlayerState = function() {
+                        if (player.paused)
+                            return 2;
+                        if (player.ended)
+                            return 0;
+
+                        return 1;
+                    };
+
+
+                    player.bufferVideoById = bufferVideoById.bind(player);
+                    player.playVideoById = playVideoById.bind(player);
+                    player.continuePlay = continuePlay.bind(player);
+                    player.whenVideoEnd = whenVideoEnd.bind(player);
+                    player.whenStartPlaying = whenStartPlaying.bind(player);
+                    player.isPlaying = isPlaying.bind(player);
+                    player.isPaused = isPaused.bind(player);
+
+                    player.emulateEvent = emulateEvent.bind(player);
+
                     player_dfd.resolve(player/*new Player(player, params)*/);
                 });
 
-
-/*                player.addEventListener = function(event, listener) {
-                    if (event == 'onStateChange') {
-                        oldEventListener('end', function() {
-                            listener({
-                                data: 0
-                            });
-                        });
-                        oldEventListener('pause', function() {
-                            listener({
-                                data: 2
-                            });
-                        });
-                        oldEventListener('playing', function() {
-                            listener({
-                                data: 1
-                            });
-                        });
-                    }
-                };*/
 
                 events = [];
 
                 oldEventListener('end', function() {
                     execEvent(events, 'end');
-                });
+                    if (this.play_stop_dfd)
+                        this.play_stop_dfd.resolve();
+                }.bind(player));
                 oldEventListener('pause', function() {
                     execEvent(events, 'pause');
                 });
                 oldEventListener('playing', function() {
                     execEvent(events, 'playing');
-                });
+                    if (this.play_back_dfd)
+                        this.play_back_dfd.resolve();
+                }.bind(player));
 
                 player.addEventListener = function(event, listener) {
                     if (event == 'onStateChange') {

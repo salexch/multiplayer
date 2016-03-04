@@ -13,7 +13,8 @@ module.exports = {
     context: APP,
     entry: {
         player: './build.js',
-        test: './test.js'
+        test_youtube: './test_youtube.js',
+        test_dailymotion: './test_dailymotion.js'
     },
     plugins: PROD ? [
         new webpack.optimize.UglifyJsPlugin({
