@@ -31,6 +31,24 @@ module.exports = (function() {
         return dfd.promise;
     }
 
+    var map_events = {
+        end: 0,
+        playing: 1,
+        pause: 2
+    };
+
+    var events = [];
+
+    function execEvent(events, event_name) {
+        var by_types = _.groupBy(events, 'type');
+        (by_types[event_name] || []).forEach(function(event) {
+            if ('function' == typeof event.listener)
+                event.listener({
+                    data: map_events[event_name]
+                });
+        });
+    }
+
     return {
         createPlayer: function(elem, params) {
             return isAPIReady().then(function() {
@@ -64,6 +82,60 @@ module.exports = (function() {
                 }
 
                 var player = new window.DM.player(elem, dm_player_params);
+
+                var oldEventListener = player.addEventListener;
+
+                oldEventListener('apiready', function() {
+                    player_dfd.resolve(player/*new Player(player, params)*/);
+                });
+
+
+/*                player.addEventListener = function(event, listener) {
+                    if (event == 'onStateChange') {
+                        oldEventListener('end', function() {
+                            listener({
+                                data: 0
+                            });
+                        });
+                        oldEventListener('pause', function() {
+                            listener({
+                                data: 2
+                            });
+                        });
+                        oldEventListener('playing', function() {
+                            listener({
+                                data: 1
+                            });
+                        });
+                    }
+                };*/
+
+                events = [];
+
+                oldEventListener('end', function() {
+                    execEvent(events, 'end');
+                });
+                oldEventListener('pause', function() {
+                    execEvent(events, 'pause');
+                });
+                oldEventListener('playing', function() {
+                    execEvent(events, 'playing');
+                });
+
+                player.addEventListener = function(event, listener) {
+                    if (event == 'onStateChange') {
+                        events.concat([{
+                            type: 'end',
+                            listener: listener
+                        },{
+                            type: 'pause',
+                            listener: listener
+                        },{
+                            type: 'playing',
+                            listener: listener
+                        }]);
+                    }
+                };
 
                 return player_dfd.promise;
             });
