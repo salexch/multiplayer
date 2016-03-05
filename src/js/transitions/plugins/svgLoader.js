@@ -12,6 +12,8 @@
 	
 	'use strict';
 
+	var Q = require('q');
+
 	function extend( a, b ) {
 		for( var key in b ) { 
 			if( b.hasOwnProperty( key ) ) {
@@ -62,22 +64,31 @@
 		if( this.isAnimating ) return false;
 		this.isAnimating = true;
 		// animate svg
+		var dfd = Q.defer();
+
 		var self = this,
 			onEndAnimation = function() {
+				dfd.resolve();
 			};
 		this._animateSVG( 'in', onEndAnimation );
 		this.el.classList.add('show');
+		return dfd.promise;
 	};
 
 	SVGLoader.prototype.hide = function() {
 		var self = this;
 
+		var dfd = Q.defer();
+
 		this._animateSVG( 'out', function() {
 			// reset path
 			self.path.attr( 'd', self.initialPath );
 			self.el.classList.remove('show');
-			self.isAnimating = false; 
-		} );
+			self.isAnimating = false;
+			dfd.resolve();
+		});
+
+		return dfd.promise;
 	};
 
 	SVGLoader.prototype._animateSVG = function( dir, callback ) {

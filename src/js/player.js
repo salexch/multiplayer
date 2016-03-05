@@ -63,11 +63,16 @@ module.exports = (function() {
 
                 this.current.setForegroundColor(fgcolor || '#000');
 
-                this.current.animation.show();
+                return this.current.animation.show();
             };
 
             this._anim.hide = function() {
-                this.current.animation.hide();
+                return this.current.animation.hide();
+/*
+                this.transitions.forEach(function(transition) {
+                    transition.animation.hide();
+                });
+*/
             };
         }
     };
