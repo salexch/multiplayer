@@ -53,13 +53,21 @@ module.exports = (function() {
                 return require('./transitions/' + transition_name + '.js')(this._wrapper);
             }.bind(this));
 
-            this._anim.show = function() {
-                this.current = _.shuffle(this.transitions)[0];
-                this.current.show();
+            this._anim.show = function(animation_name, bgcolor, fgcolor) {
+                if (!animation_name)
+                    this.current = _.shuffle(this.transitions)[0];
+                else
+                    this.current = this.transitions[options.useTransition.indexOf(animation_name)];
+
+                this.current.setBackgroundColor(bgcolor || '#000');
+
+                this.current.setForegroundColor(fgcolor || '#000');
+
+                this.current.animation.show();
             };
 
             this._anim.hide = function() {
-                this.current.hide();
+                this.current.animation.hide();
             };
         }
     };
@@ -328,6 +336,13 @@ module.exports = (function() {
 
     player.prototype.onPlayTimeChange = function() {
 
+    };
+
+    player.prototype.showTransition = function(effect_name, background_color, foreground_color) {
+        this._anim.show(effect_name, background_color, foreground_color);
+    };
+    player.prototype.hideTransition = function() {
+        this._anim.hide();
     };
 
     return {

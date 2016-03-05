@@ -67,4 +67,5 @@
             }]
     });
 
+    window.videoplayer = player;
 })();
