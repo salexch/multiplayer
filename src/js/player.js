@@ -32,7 +32,8 @@ module.exports = (function() {
             current: null,
             transitions: [],
             show: function() {},
-            hide: function() {}
+            hide: function() {},
+            hideAll: function() {}
         };
 
         this._wrapper = element;
@@ -67,14 +68,14 @@ module.exports = (function() {
             };
 
             this._anim.hide = function() {
-                //return this.current.animation.hide();
-
-                //temporary solution?!
-                this.transitions.forEach(function(transition) {
-                    transition.animation.hide();
-                });
-
+                return this.current.animation.hide();
             };
+
+            this._anim.hideAll = function() {
+                this.transitions.forEach(function(transition) {
+                    transition.animation.hide(true);
+                });
+            }
         }
     };
 
@@ -124,6 +125,7 @@ module.exports = (function() {
     function _playList() {
         this._players[0].whenVideoEnd().then(function() {
             this._players[0].mute();
+            this._anim.hideAll();
             this._anim.show();
             this._playlist_index += 1;
             this._players[1].whenStartPlaying().then(function() {

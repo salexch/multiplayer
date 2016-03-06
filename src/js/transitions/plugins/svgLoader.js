@@ -75,18 +75,21 @@
 		return dfd.promise;
 	};
 
-	SVGLoader.prototype.hide = function() {
-		var self = this;
+	SVGLoader.prototype.hide = function(immidiate) {
+		var dfd = Q.defer(),
+			onEndAnimation = function() {
+				// reset path
+				this.path.attr( 'd', this.initialPath );
+				this.el.classList.remove('show');
+				this.isAnimating = false;
+				dfd.resolve();
+			}.bind(this);
 
-		var dfd = Q.defer();
 
-		this._animateSVG( 'out', function() {
-			// reset path
-			self.path.attr( 'd', self.initialPath );
-			self.el.classList.remove('show');
-			self.isAnimating = false;
-			dfd.resolve();
-		});
+		if (immidiate)
+			onEndAnimation();
+		else
+			this._animateSVG( 'out', onEndAnimation);
 
 		return dfd.promise;
 	};
