@@ -142,6 +142,10 @@ module.exports = (function() {
 
                 var oldEventListener = player.addEventListener;
 
+                oldEventListener('error', function() {
+                    console.log('Dailymotion error', player.error);
+                });
+
                 var api_ready = false;
                 oldEventListener('apiready', function() {
                     if (api_ready)
@@ -200,7 +204,10 @@ module.exports = (function() {
 
                     player.emulateEvent = emulateEvent.bind(player);
 
-                    player_dfd.resolve(player/*new Player(player, params)*/);
+                    //temprorary solution for api not ready!
+                    setTimeout(function() {
+                        player_dfd.resolve(player/*new Player(player, params)*/);
+                    }, 2000);
                 });
 
 
