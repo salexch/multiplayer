@@ -67,12 +67,13 @@ module.exports = (function() {
             };
 
             this._anim.hide = function() {
-                return this.current.animation.hide();
-/*
+                //return this.current.animation.hide();
+
+                //temporary solution?!
                 this.transitions.forEach(function(transition) {
                     transition.animation.hide();
                 });
-*/
+
             };
         }
     };
@@ -160,9 +161,20 @@ module.exports = (function() {
             this._playlist_index = 0;
 
         if (is_active) {
-            this._players[1].bufferVideoById(this._playlist[0].id).then(function() {
-                this._playlist_index = -1;
-                this._players[0].emulateEvent(0);
+            this._players[1].destroy();
+            var player_elem = _createPlayerElem();
+
+            this._wrapper.appendChild(player_elem);
+
+            require('./players/' + this._playlist[0].api + '.js').createPlayer(player_elem, this._player_params).then(function(player) {
+                if (this._mute)
+                    player.mute();
+                this._players[1] = player;
+
+                this._players[1].bufferVideoById(this._playlist[0].id).then(function() {
+                    this._playlist_index = -1;
+                    this._players[0].emulateEvent(0);
+                }.bind(this));
             }.bind(this));
 
             return false;
