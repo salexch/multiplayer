@@ -75,7 +75,7 @@
 		return dfd.promise;
 	};
 
-	SVGLoader.prototype.hide = function(immidiate) {
+	SVGLoader.prototype.hide = function(immediate) {
 		var dfd = Q.defer(),
 			onEndAnimation = function() {
 				// reset path
@@ -86,7 +86,7 @@
 			}.bind(this);
 
 
-		if (immidiate)
+		if (immediate)
 			onEndAnimation();
 		else
 			this._animateSVG( 'out', onEndAnimation);
