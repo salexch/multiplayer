@@ -27,6 +27,7 @@
             onStateChange: onPlayerStateChange2
         }*/
     }, {
+        preloadSeconds: 1,
         useTransition: [
             'circle',
             'curtain',

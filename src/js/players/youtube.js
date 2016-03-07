@@ -41,15 +41,16 @@ module.exports = (function() {
     }*/
 
 
-    function bufferVideoById(id) {
+    function bufferVideoById(id, seconds) {
         var dfd = Q.defer();
         this.getIframe().style.display = 'none';
         this.mute();
         this.loadVideoById(id);
+        this.setPlaybackQuality('highres');
         setTimeout(function() {
             this.pauseVideo();
             dfd.resolve();
-        }.bind(this), 0.5);
+        }.bind(this), seconds || 0.3);
 
         return dfd.promise;
     }
