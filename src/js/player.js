@@ -348,9 +348,19 @@ module.exports = (function() {
         this._wrapper.innerHTML = '';
     };
 
-
     player.prototype.onStartPlaying = function() {
 
+    };
+
+    player.prototype.setVolume = function(volume) {
+        volume = ~~volume;
+        volume = volume < 0 ? 0 : volume;
+        volume = volume > 100 ? 100 : volume;
+        try {
+            this._players[0].setVolume(~~volume);
+        } catch (e) {
+            console.debug('setVolume failed: player not found', e);
+        }
     };
 
 

@@ -57,6 +57,7 @@ module.exports = (function() {
 
     function playVideoById(id) {
         this.getIframe().style.display = 'block';
+        this.setPlaybackQuality('highres');
         this.loadVideoById(id);
     }
 

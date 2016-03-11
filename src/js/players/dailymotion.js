@@ -53,6 +53,7 @@ module.exports = (function() {
         var dfd = Q.defer();
         this.style.display = 'none';
         this.mute();
+        this.setQuality('1080');
         this.loadVideoById(id);
         setTimeout(function() {
             this.pauseVideo();
@@ -64,6 +65,7 @@ module.exports = (function() {
 
     function playVideoById(id) {
         this.style.display = 'block';
+        this.setQuality('1080');
         this.loadVideoById(id);
     }
 
@@ -168,8 +170,12 @@ module.exports = (function() {
                     player.mute = function() {
                         player.setMuted(true);
                     };
+                    var oldSetVolume = player.setVolume;
                     player.unMute = function() {
                         player.setMuted(false);
+                    };
+                    player.setVolume = function(volume) {
+                        oldSetVolume(~~volume/100);
                     };
                     player.getDuration = function() {
                         return player.duration;
