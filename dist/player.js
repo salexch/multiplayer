@@ -242,7 +242,7 @@
 	            return false;
 	        }
 	
-	        var init_playlist = this._playlist.slice(this._playlist_index, 2);
+	        var init_playlist = this._playlist.slice(this._playlist_index, this._playlist_index + 2);
 	
 	        var players_dfd = init_playlist.map(function(video) {
 	            var player_elem = _createPlayerElem();
