@@ -101,7 +101,7 @@ module.exports = (function() {
         var video = this._playlist[index];
 
         if (!video && this._loop) {
-            this._playlist_index = 0;
+            //this._playlist_index = 0;
             video = this._playlist[0];
         }
 
@@ -129,6 +129,8 @@ module.exports = (function() {
             this._anim.hideAll();
             this._anim.show();
             this._playlist_index += 1;
+            if (this._loop && this._playlist_index >= this._playlist.length)
+                this._playlist_index = 0;
             this._players[1].whenStartPlaying().then(function() {
                 //console.debug('Playing video at ', this._playlist_index);
                 this._anim.hide();
