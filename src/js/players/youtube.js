@@ -43,11 +43,20 @@ module.exports = (function() {
 
     function bufferVideoById(id, seconds) {
         var dfd = Q.defer();
+
+        this.is_buffering = true;
+
+        this.curr_video = {
+            api: 'youtube',
+            id: id
+        };
+
         this.getIframe().style.display = 'none';
         this.mute();
         this.loadVideoById(id);
         this.setPlaybackQuality('highres');
         setTimeout(function() {
+            this.is_buffering = false;
             this.pauseVideo();
             dfd.resolve();
         }.bind(this), seconds || 0.3);
@@ -124,8 +133,9 @@ module.exports = (function() {
                     if (window.YT.PlayerState.ENDED == e.data)
                         this.play_stop_dfd.resolve();
                     else if (window.YT.PlayerState.PLAYING == e.data) {
-                        if (this.play_back_dfd)
-                            this.play_back_dfd.resolve();
+                        //TODO don't fire while buffering by bufferVideoById func
+                        if (this.play_back_dfd && !this.is_buffering)
+                            this.play_back_dfd.resolve(this.curr_video);
                     }
                 }.bind(player));
 

@@ -17,7 +17,7 @@
             autoplay: 1,
             //controls: 0,
             fs: 1,
-            loop: 1,
+            //loop: 1,
             modestbranding: 0,
             rel: 0,
             showinfo: 0
@@ -54,6 +54,7 @@
 
     }
 
+    player.setLoop(true);
 
     player.loadPlaylist({
         list: [{
@@ -61,9 +62,6 @@
                 api: 'youtube'
             },{
                 id: "aC07SVaSFnc",
-                api: 'youtube'
-            },{
-                id: "WJO31hbI-sQ",
                 api: 'youtube'
             }]
     });

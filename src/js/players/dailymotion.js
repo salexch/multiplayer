@@ -53,9 +53,11 @@ module.exports = (function() {
         var dfd = Q.defer();
         this.style.display = 'none';
         this.mute();
+        this.is_buffering = true;
         this.setQuality('1080');
         this.loadVideoById(id);
         setTimeout(function() {
+            this.is_buffering = false;
             this.pauseVideo();
             dfd.resolve();
         }.bind(this), 0.5);
@@ -229,7 +231,7 @@ module.exports = (function() {
                 });
                 oldEventListener('playing', function() {
                     execEvent(events, 'playing');
-                    if (this.play_back_dfd)
+                    if (this.play_back_dfd && !this.is_buffering)
                         this.play_back_dfd.resolve();
                 }.bind(player));
 
