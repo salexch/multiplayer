@@ -37,7 +37,8 @@ module.exports = (function() {
         pause: 2
     };
 
-    var events = [];
+    var events = [],
+        error_events = [];
 
     function execEvent(events, event_name) {
         var by_types = _.groupBy(events, 'type');
@@ -53,11 +54,9 @@ module.exports = (function() {
         var dfd = Q.defer();
         this.style.display = 'none';
         this.mute();
-        this.is_buffering = true;
         this.setQuality('1080');
         this.loadVideoById(id);
         setTimeout(function() {
-            this.is_buffering = false;
             this.pauseVideo();
             dfd.resolve();
         }.bind(this), 0.5);
@@ -147,7 +146,16 @@ module.exports = (function() {
                 var oldEventListener = player.addEventListener;
 
                 oldEventListener('error', function() {
-                    console.log('Dailymotion error', player.error);
+                    var code = 0;
+                    if (player.error.code == 'PLAYER_ERR_VIDEO_NOT_SUPPORTED')
+                        code = 5;
+
+                    error_events.forEach(function(listener) {
+                        listener({
+                            data: code
+                        });
+                    });
+                    console.debug('Dailymotion error', player.error);
                 });
 
                 var api_ready = false;
@@ -186,7 +194,7 @@ module.exports = (function() {
                         return player.duration;
                     };
                     player.getCurrentTime = function() {
-                      return player.currentTime;
+                        return player.currentTime;
                     };
                     player.getPlayerState = function() {
                         if (player.paused)
@@ -231,7 +239,7 @@ module.exports = (function() {
                 });
                 oldEventListener('playing', function() {
                     execEvent(events, 'playing');
-                    if (this.play_back_dfd && !this.is_buffering)
+                    if (this.play_back_dfd)
                         this.play_back_dfd.resolve();
                 }.bind(player));
 
@@ -247,7 +255,8 @@ module.exports = (function() {
                             type: 'playing',
                             listener: listener
                         }]);
-                    }
+                    } else if (event == 'onError')
+                        error_events.push(listener);
                 };
 
                 return player_dfd.promise;
