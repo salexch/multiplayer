@@ -26860,6 +26860,7 @@
 		
 		
 		                events = [];
+		                error_events = [];
 		
 		                oldEventListener('end', function() {
 		                    execEvent(events, 'end');
