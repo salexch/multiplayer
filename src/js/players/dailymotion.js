@@ -245,7 +245,7 @@ module.exports = (function() {
 
                 player.addEventListener = function(event, listener) {
                     if (event == 'onStateChange') {
-                        events.concat([{
+                        events = events.concat([{
                             type: 'end',
                             listener: listener
                         },{
