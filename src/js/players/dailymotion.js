@@ -54,7 +54,7 @@ module.exports = (function() {
         var dfd = Q.defer();
         this.style.display = 'none';
         this.mute();
-        this.setQuality('1080');
+        //this.setQuality('1080');
         this.loadVideoById(id);
         setTimeout(function() {
             this.pauseVideo();
@@ -66,7 +66,7 @@ module.exports = (function() {
 
     function playVideoById(id) {
         this.style.display = 'block';
-        this.setQuality('1080');
+        //this.setQuality('1080');
         this.loadVideoById(id);
     }
 

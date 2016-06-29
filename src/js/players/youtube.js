@@ -54,7 +54,7 @@ module.exports = (function() {
         this.getIframe().style.display = 'none';
         this.mute();
         this.loadVideoById(id);
-        this.setPlaybackQuality('highres');
+        //this.setPlaybackQuality('highres');
         setTimeout(function() {
             this.is_buffering = false;
             this.pauseVideo();
@@ -66,7 +66,7 @@ module.exports = (function() {
 
     function playVideoById(id) {
         this.getIframe().style.display = 'block';
-        this.setPlaybackQuality('highres');
+        //this.setPlaybackQuality('highres');
         this.loadVideoById(id);
     }
 
