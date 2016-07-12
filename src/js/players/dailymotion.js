@@ -190,9 +190,6 @@ module.exports = (function() {
                     player.getDuration = function() {
                         return player.duration;
                     };
-                    player.getDuration = function() {
-                        return player.duration;
-                    };
                     player.getCurrentTime = function() {
                         return player.currentTime;
                     };

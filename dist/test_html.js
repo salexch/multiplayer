@@ -105,12 +105,21 @@
 	
 	    player.loadPlaylist({
 	        list: [{
-	                id: "5mKFLuqcjrY",
-	                api: 'youtube'
-	            },{
-	                id: "aC07SVaSFnc",
-	                api: 'youtube'
-	            }]
+	            id: "http://techslides.com/demos/sample-videos/small.webm",
+	            api: 'html'
+	        },{
+	            id: "https://permadi.com/thirdParty/videos/redcliff450.webm",
+	            api: 'html'
+	        }]
+	/*
+	        list: [{
+	            id: "file:///S:/YOUTUBE%20OUT/FR16137414HD.mp4",
+	            api: 'html'
+	        },{
+	            id: "file:///S:/YOUTUBE%20OUT/FR16137420HD.mp4",
+	            api: 'html'
+	        }]
+	*/
 	    });
 	
 	    window.videoplayer = player;
@@ -28521,4 +28530,4 @@
 /***/ }
 
 /******/ });
-//# sourceMappingURL=test_youtube.js.map
+//# sourceMappingURL=test_html.js.map
