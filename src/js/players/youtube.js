@@ -35,13 +35,7 @@ module.exports = (function() {
     }
 
 
-
-/*    function Player(player, params) {
-
-    }*/
-
-
-    function bufferVideoById(id, seconds) {
+    function bufferVideoById(id, startSeconds, seconds) {
         var dfd = Q.defer();
 
         this.is_buffering = true;
@@ -53,7 +47,7 @@ module.exports = (function() {
 
         this.getIframe().style.display = 'none';
         this.mute();
-        this.loadVideoById(id);
+        this.loadVideoById(id, startSeconds || 0);
         //this.setPlaybackQuality('highres');
         setTimeout(function() {
             this.is_buffering = false;
@@ -64,10 +58,17 @@ module.exports = (function() {
         return dfd.promise;
     }
 
-    function playVideoById(id) {
+    function playVideoById(id, startSeconds, endSeconds) {
         this.getIframe().style.display = 'block';
         //this.setPlaybackQuality('highres');
-        this.loadVideoById(id);
+        var params = {
+            videoId: id,
+            startSeconds: startSeconds || 0
+        };
+        if (endSeconds)
+            params.endSeconds = endSeconds || 0;
+        
+        this.loadVideoById(params);
     }
 
 

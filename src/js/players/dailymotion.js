@@ -31,24 +31,7 @@ module.exports = (function() {
         return dfd.promise;
     }
 
-    var map_events = {
-        end: 0,
-        playing: 1,
-        pause: 2
-    };
 
-    var events = [],
-        error_events = [];
-
-    function execEvent(events, event_name) {
-        var by_types = _.groupBy(events, 'type');
-        (by_types[event_name] || []).forEach(function(event) {
-            if ('function' == typeof event.listener)
-                event.listener({
-                    data: map_events[event_name]
-                });
-        });
-    }
 
     function bufferVideoById(id) {
         var dfd = Q.defer();
@@ -108,6 +91,26 @@ module.exports = (function() {
     return {
         createPlayer: function(elem, params) {
             console.debug('Player params', params);
+
+            var map_events = {
+                end: 0,
+                playing: 1,
+                pause: 2
+            };
+
+            var events = [],
+                error_events = [];
+
+            function execEvent(events, event_name) {
+                var by_types = _.groupBy(events, 'type');
+                (by_types[event_name] || []).forEach(function(event) {
+                    if ('function' == typeof event.listener)
+                        event.listener({
+                            data: map_events[event_name]
+                        });
+                });
+            }
+            
             return isAPIReady().then(function() {
                 var player_dfd = Q.defer();
 
@@ -202,6 +205,8 @@ module.exports = (function() {
                         return 1;
                     };
                     player.destroy = function() {
+                        events = [];
+                        error_events = [];
                         player.parentNode.removeChild(player);
                         player = null;
                     };

@@ -110,7 +110,7 @@ module.exports = (function() {
             this._wrapper.appendChild(player_elem);
             require('./players/' + video.api + '.js').createPlayer(player_elem, this._player_params).then(function(player) {
                 this._players.push(player);
-                player.bufferVideoById(video.id, this._options.preloadSeconds);
+                player.bufferVideoById(video.id, video.startSeconds || 0, this._options.preloadSeconds);
                 _playList.call(this);
             }.bind(this));
         }
@@ -176,7 +176,7 @@ module.exports = (function() {
                     player.mute();
                 this._players[1] = player;
 
-                this._players[1].bufferVideoById(this._playlist[0].id, this._options.preloadSeconds).then(function() {
+                this._players[1].bufferVideoById(this._playlist[0].id, this._playlist[0].startSeconds || 0, this._options.preloadSeconds).then(function() {
                     this._playlist_index = -1;
                     this._players[0].emulateEvent(0);
                 }.bind(this));
@@ -203,9 +203,9 @@ module.exports = (function() {
             }.bind(this));
 
             _attachEvents.call(this);
-            this._players[0].playVideoById(init_playlist[0].id);
+            this._players[0].playVideoById(init_playlist[0].id, init_playlist[0].startSeconds || 0, init_playlist[0].endSeconds || 0);
             if (this._players[1])
-                this._players[1].bufferVideoById(init_playlist[1].id, this._options.preloadSeconds);
+                this._players[1].bufferVideoById(init_playlist[1].id, init_playlist[1].startSeconds || 0, this._options.preloadSeconds);
 
             _playList.call(this);
         }.bind(this));
@@ -239,7 +239,7 @@ module.exports = (function() {
         if (!this._playlist || !this._playlist.length || !this._playlist[index])
             return false;
 
-        this._players[1].bufferVideoById(this._playlist[index].id, this._options.preloadSeconds).then(function() {
+        this._players[1].bufferVideoById(this._playlist[index].id, this._playlist[index].startSeconds || 0, this._options.preloadSeconds).then(function() {
             this._playlist_index = index - 1;
             this._players[0].emulateEvent(0); //ended
         }.bind(this));
