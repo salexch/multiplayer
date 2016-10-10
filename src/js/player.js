@@ -166,7 +166,11 @@ module.exports = (function() {
             this._playlist_index = 0;
 
         if (is_active) {
-            this._players[1].destroy();
+            try {
+                this._players[1].destroy();
+            } catch (e) {
+                console.debug('player 1 destroy not found', e);
+            }
             var player_elem = _createPlayerElem();
 
             this._wrapper.appendChild(player_elem);

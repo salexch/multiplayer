@@ -33,13 +33,13 @@ module.exports = (function() {
 
 
 
-    function bufferVideoById(id) {
+    function bufferVideoById(id, startSeconds) {
         var dfd = Q.defer();
         this.style.display = 'none';
         this.mute();
         //this.setQuality('1080');
-        this.loadVideoById(id);
-        setTimeout(function() {
+        this.loadVideoById(id, startSeconds || 0);
+        this.buffer_timer = setTimeout(function() {
             this.pauseVideo();
             dfd.resolve();
         }.bind(this), 0.5);
@@ -47,10 +47,11 @@ module.exports = (function() {
         return dfd.promise;
     }
 
-    function playVideoById(id) {
+    function playVideoById(id, startSeconds) {
+        clearTimeout(this.buffer_timer);
         this.style.display = 'block';
         //this.setQuality('1080');
-        this.loadVideoById(id);
+        this.loadVideoById(id, startSeconds || 0);
     }
 
 
@@ -150,7 +151,7 @@ module.exports = (function() {
 
                 oldEventListener('error', function() {
                     var code = 0;
-                    if (player.error.code == 'PLAYER_ERR_VIDEO_NOT_SUPPORTED')
+                    if (player.error && player.error.code == 'PLAYER_ERR_VIDEO_NOT_SUPPORTED')
                         code = 5;
 
                     error_events.forEach(function(listener) {
@@ -172,9 +173,10 @@ module.exports = (function() {
 
                     player.play_stop_dfd = Q.defer();
 
-                    player.loadVideoById = function(id) {
+                    player.loadVideoById = function(id, startSeconds) {
                         player.load(id, {
-                            autoplay: true
+                            autoplay: true,
+                            start: startSeconds || 0
                         });
                     };
                     player.playVideo = player.play;
