@@ -36,6 +36,8 @@ module.exports = (function() {
     function bufferVideoById(id, startSeconds) {
         var dfd = Q.defer();
         this.style.display = 'none';
+        this._video_buffering = true;
+        this._video_id = id;
         this.mute();
         //this.setQuality('1080');
         this.loadVideoById(id, startSeconds || 0);
@@ -151,7 +153,7 @@ module.exports = (function() {
 
                 oldEventListener('error', function() {
                     var code = 0;
-                    if (player.error && player.error.code == 'PLAYER_ERR_VIDEO_NOT_SUPPORTED')
+                    if (player.error && player.error.code && player.error.code == 'PLAYER_ERR_VIDEO_NOT_SUPPORTED')
                         code = 5;
 
                     error_events.forEach(function(listener) {
@@ -178,6 +180,10 @@ module.exports = (function() {
                             autoplay: true,
                             start: startSeconds || 0
                         });
+
+                        if (startSeconds) {
+                            this._video_start = startSeconds;
+                        }
                     };
                     player.playVideo = player.play;
                     player.pauseVideo = player.pause;
@@ -243,9 +249,17 @@ module.exports = (function() {
                     execEvent(events, 'pause');
                 });
                 oldEventListener('playing', function() {
-                    execEvent(events, 'playing');
-                    if (this.play_back_dfd)
-                        this.play_back_dfd.resolve();
+                    if (this._video_start) {
+                        this.seek(this._video_start);
+                        this._video_start = 0;
+                    }
+                    if (this._video_buffering) {
+                        this._video_buffering = false;
+                    } else {
+                        execEvent(events, 'playing');
+                        if (this.play_back_dfd)
+                            this.play_back_dfd.resolve();
+                    }
                 }.bind(player));
 
                 player.addEventListener = function(event, listener) {

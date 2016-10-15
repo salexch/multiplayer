@@ -181,6 +181,7 @@ module.exports = (function() {
                 this._players[1] = player;
 
                 this._players[1].bufferVideoById(this._playlist[0].id, this._playlist[0].startSeconds || 0, this._options.preloadSeconds).then(function() {
+                    this._playlist[0].startSeconds = 0;
                     this._playlist_index = -1;
                     this._players[0].emulateEvent(0);
                 }.bind(this));
@@ -211,6 +212,8 @@ module.exports = (function() {
             if (this._players[1])
                 this._players[1].bufferVideoById(init_playlist[1].id, init_playlist[1].startSeconds || 0, this._options.preloadSeconds);
 
+            this._playlist[0].startSeconds = 0;
+            this._playlist[1].startSeconds = 0;
             _playList.call(this);
         }.bind(this));
     };
