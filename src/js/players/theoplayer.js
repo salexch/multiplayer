@@ -88,13 +88,13 @@ module.exports = (function() {
         video.controls = false;
         if (params.controls)
             video.controls = params.controls;
-        
+
         var Player = function(video) {
             this.elem = elem;
 
             var buffering = false,
                 playing = false;
-            
+
             var events = [],
                 error_events = [];
 
@@ -193,9 +193,9 @@ module.exports = (function() {
             //Fires when the browser is trying to get media data, but data is not available
             video.onstalled = function() {
                 console.log('[html video tag event]', 'stalled');
-/*                buffering = false;
-                playing = false;
-                execEvent(events, 'end');*/
+                /*                buffering = false;
+                 playing = false;
+                 execEvent(events, 'end');*/
             };
 
             //Fires when the browser is intentionally not getting media data
@@ -219,9 +219,7 @@ module.exports = (function() {
             //------------Methods----------------
             this.loadVideoById = function(src, startSeconds) {
                 //this.elem.autoplay = true;
-                if (!video.src)
-                    video.src = src;
-
+                video.src = src;
                 video.play();
                 if (startSeconds) {
                     video.currentTime = startSeconds;
@@ -261,14 +259,11 @@ module.exports = (function() {
                 return 1;
             };
             this.destroy = function() {
-                events = [];
-                error_events = [];
                 elem.removeChild(video);
                 elem.style.display = 'none';
-                video = null;
                 //player = null;
             };
-            
+
             this.addEventListener = function(event, listener) {
                 if (event == 'onStateChange') {
                     events = events.concat([{
@@ -284,76 +279,71 @@ module.exports = (function() {
                 } else if (event == 'onError')
                     error_events.push(listener);
             };
-            
+
 
         };
-        
-        return new Player(video);
+
+        return new Player(theoplayer(video));
     }
 
+
+    var dfd = Q.defer();
+
+    function isAPIReady(api_key) {
+        window.theoplayer = {
+
+        };
+
+        // 2. This code loads the IFrame Player API code asynchronously.
+        var tag = document.createElement('script');
+
+        tag.src = "https://cdn.theoplayer.com/latest/" + api_key + "/theoplayer.loader.js";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        window.theoplayer.onReady = function() {
+            dfd.resolve();
+        };
+        return dfd.promise;
+    }
+
+
     return {
-        getDuration: function(id) {
-            var dfd = Q.defer();
-            var video = document.createElement('video');
-            video.src = id;
-            //video.autoplay = true;
-            video.ondurationchange = function() {
-                dfd.resolve(20 * 60);
-                //dfd.resolve(video.duration);
-                document.body.removeChild(video);
-                video = null;
-            };
-
-            document.body.appendChild(video);
-
-            return dfd.promise;
-        },
         createPlayer: function(elem, params) {
-            var player_dfd = Q.defer();
 
-            var player = createPlayer(elem, params);
+            return isAPIReady(params && params.theoplayer && params.theoplayer.api_key)
+                .then(function() {
+                    var player_dfd = Q.defer();
 
-            //on ready event
-/*            player.elem.oncanplay = function() {
-                player.play_stop_dfd = Q.defer();
-                player.bufferVideoById = bufferVideoById.bind(player);
-                player.playVideoById = playVideoById.bind(player);
-                player.continuePlay = continuePlay.bind(player);
-                player.whenVideoEnd = whenVideoEnd.bind(player);
-                player.whenStartPlaying = whenStartPlaying.bind(player);
-                player.isPlaying = isPlaying.bind(player);
-                player.isPaused = isPaused.bind(player);
+                    var player = createPlayer(elem, params);
 
-                player.emulateEvent = emulateEvent.bind(player);
+                    player.play_stop_dfd = Q.defer();
+                    player.bufferVideoById = bufferVideoById.bind(player);
+                    player.playVideoById = playVideoById.bind(player);
+                    player.continuePlay = continuePlay.bind(player);
+                    player.whenVideoEnd = whenVideoEnd.bind(player);
+                    player.whenStartPlaying = whenStartPlaying.bind(player);
+                    player.isPlaying = isPlaying.bind(player);
+                    player.isPaused = isPaused.bind(player);
 
-                player_dfd.resolve(player);
-            };*/
-            player.play_stop_dfd = Q.defer();
-            player.bufferVideoById = bufferVideoById.bind(player);
-            player.playVideoById = playVideoById.bind(player);
-            player.continuePlay = continuePlay.bind(player);
-            player.whenVideoEnd = whenVideoEnd.bind(player);
-            player.whenStartPlaying = whenStartPlaying.bind(player);
-            player.isPlaying = isPlaying.bind(player);
-            player.isPaused = isPaused.bind(player);
+                    player.emulateEvent = emulateEvent.bind(player);
 
-            player.emulateEvent = emulateEvent.bind(player);
-
-            player_dfd.resolve(player);
+                    player_dfd.resolve(player);
 
 
-            player.addEventListener('onStateChange', function(e) {
-                if (0 == e.data)
-                    this.play_stop_dfd.resolve();
-                else if (1 == e.data) {
-                    //TODO don't fire while buffering by bufferVideoById func
-                    if (this.play_back_dfd && !this.is_buffering)
-                        this.play_back_dfd.resolve(this.curr_video);
-                }
-            }.bind(player));
+                    player.addEventListener('onStateChange', function(e) {
+                        if (0 == e.data)
+                            this.play_stop_dfd.resolve();
+                        else if (1 == e.data) {
+                            //TODO don't fire while buffering by bufferVideoById func
+                            if (this.play_back_dfd && !this.is_buffering)
+                                this.play_back_dfd.resolve(this.curr_video);
+                        }
+                    }.bind(player));
 
 
-            return player_dfd.promise;
+                    return player_dfd.promise;
+                });
         }
     };
 })();

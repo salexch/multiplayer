@@ -15,7 +15,8 @@ module.exports = {
         player: './build.js',
         test_youtube: './test_youtube.js',
         test_dailymotion: './test_dailymotion.js',
-        test_html: './test_html.js'
+        test_html: './test_html.js',
+        test_theoplayer: './test_theoplayer.js'
     },
     plugins: PROD ? [
         new webpack.optimize.UglifyJsPlugin({

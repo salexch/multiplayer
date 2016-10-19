@@ -46,7 +46,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Created by alex on 3/4/2016.
+	 * Created by alex on 2/19/2016.
 	 */
 	;(function() {
 	
@@ -59,21 +59,25 @@
 	    AggPlayer.debug(true);
 	
 	    var player = new AggPlayer.Player('player', {
+	        theoplayer: {
+	            api_key: 'f9c64920-f538-4b51-b34e-afd660d6ce2c'
+	        },
 	        playerVars: {
 	            autohide: 2,
 	            autoplay: 1,
 	            //controls: 0,
 	            fs: 1,
-	            loop: 1,
+	            //loop: 1,
 	            modestbranding: 0,
 	            rel: 0,
 	            showinfo: 0
 	        },
-	        /*        events: {
-	         onReady: onPlayerReady2,
-	         onStateChange: onPlayerStateChange2
-	         }*/
+	/*        events: {
+	            onReady: onPlayerReady2,
+	            onStateChange: onPlayerStateChange2
+	        }*/
 	    }, {
+	        preloadSeconds: 1,
 	        useTransition: [
 	            'circle',
 	            'curtain',
@@ -91,17 +95,34 @@
 	        ]
 	    });
 	
+	    function onPlayerReady() {
+	
+	    }
+	
+	
+	    function onPlayerStateChange() {
+	
+	    }
+	
+	    player.setLoop(true);
 	
 	    player.loadPlaylist({
 	        list: [{
-	            id: "x1kwday_fashiontv-live-asia-24-7_lifestyle",
-	            api: 'dailymotion'
-	        },{
-	            id: "x1kwday_fashiontv-live-asia-24-7_lifestyle",
-	            api: 'dailymotion'
+	            id: "http://stream.cloudy.services/vod/_definst_/43/FASHION_FILM_1_nuyxkolv_mp4/playlist.m3u8",
+	            api: 'theoplayer'
 	        }]
+	/*
+	        list: [{
+	            id: "file:///S:/YOUTUBE%20OUT/FR16137414HD.mp4",
+	            api: 'html'
+	        },{
+	            id: "file:///S:/YOUTUBE%20OUT/FR16137420HD.mp4",
+	            api: 'html'
+	        }]
+	*/
 	    });
 	
+	    window.videoplayer = player;
 	})();
 
 /***/ },
@@ -29685,4 +29706,4 @@
 /***/ }
 
 /******/ });
-//# sourceMappingURL=test_dailymotion.js.map
+//# sourceMappingURL=test_theoplayer.js.map

@@ -50,7 +50,7 @@
 	 */
 	;(function() {
 	
-	    var AggPlayer = __webpack_require__(46);
+	    var AggPlayer = __webpack_require__(48);
 	    //var AggPlayer = require('./../test/player.js');
 	    AggPlayer = window.MultiPlayer;
 	    console.log('player', AggPlayer);
@@ -118,7 +118,7 @@
 
 /***/ },
 
-/***/ 46:
+/***/ 48:
 /***/ function(module, exports) {
 
 	/******/ (function(modules) { // webpackBootstrap
@@ -564,6 +564,14 @@
 		    };
 		    player.prototype.hideTransition = function() {
 		        this._anim.hide();
+		    };
+		
+		    player.prototype.fetchDuration = function(api, id) {
+		        try {
+		            return __webpack_require__(41)("./" + api + '.js').getDuration(id);
+		        } catch (e) {
+		            return Q(-1);
+		        }
 		    };
 		
 		    return {
@@ -2646,83 +2654,35 @@
 		var cachedSetTimeout;
 		var cachedClearTimeout;
 		
-		function defaultSetTimout() {
-		    throw new Error('setTimeout has not been defined');
-		}
-		function defaultClearTimeout () {
-		    throw new Error('clearTimeout has not been defined');
-		}
 		(function () {
 		    try {
-		        if (typeof setTimeout === 'function') {
-		            cachedSetTimeout = setTimeout;
-		        } else {
-		            cachedSetTimeout = defaultSetTimout;
-		        }
+		        cachedSetTimeout = setTimeout;
 		    } catch (e) {
-		        cachedSetTimeout = defaultSetTimout;
+		        cachedSetTimeout = function () {
+		            throw new Error('setTimeout is not defined');
+		        }
 		    }
 		    try {
-		        if (typeof clearTimeout === 'function') {
-		            cachedClearTimeout = clearTimeout;
-		        } else {
-		            cachedClearTimeout = defaultClearTimeout;
-		        }
+		        cachedClearTimeout = clearTimeout;
 		    } catch (e) {
-		        cachedClearTimeout = defaultClearTimeout;
+		        cachedClearTimeout = function () {
+		            throw new Error('clearTimeout is not defined');
+		        }
 		    }
 		} ())
 		function runTimeout(fun) {
 		    if (cachedSetTimeout === setTimeout) {
-		        //normal enviroments in sane situations
 		        return setTimeout(fun, 0);
+		    } else {
+		        return cachedSetTimeout.call(null, fun, 0);
 		    }
-		    // if setTimeout wasn't available but was latter defined
-		    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-		        cachedSetTimeout = setTimeout;
-		        return setTimeout(fun, 0);
-		    }
-		    try {
-		        // when when somebody has screwed with setTimeout but no I.E. maddness
-		        return cachedSetTimeout(fun, 0);
-		    } catch(e){
-		        try {
-		            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-		            return cachedSetTimeout.call(null, fun, 0);
-		        } catch(e){
-		            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-		            return cachedSetTimeout.call(this, fun, 0);
-		        }
-		    }
-		
-		
 		}
 		function runClearTimeout(marker) {
 		    if (cachedClearTimeout === clearTimeout) {
-		        //normal enviroments in sane situations
-		        return clearTimeout(marker);
+		        clearTimeout(marker);
+		    } else {
+		        cachedClearTimeout.call(null, marker);
 		    }
-		    // if clearTimeout wasn't available but was latter defined
-		    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-		        cachedClearTimeout = clearTimeout;
-		        return clearTimeout(marker);
-		    }
-		    try {
-		        // when when somebody has screwed with setTimeout but no I.E. maddness
-		        return cachedClearTimeout(marker);
-		    } catch (e){
-		        try {
-		            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-		            return cachedClearTimeout.call(null, marker);
-		        } catch (e){
-		            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-		            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-		            return cachedClearTimeout.call(this, marker);
-		        }
-		    }
-		
-		
-		
 		}
 		var queue = [];
 		var draining = false;
@@ -2917,20 +2877,16 @@
 		  var undefined;
 		
 		  /** Used as the semantic version number. */
-		  var VERSION = '4.16.4';
+		  var VERSION = '4.14.1';
 		
 		  /** Used as the size to enable large array optimizations. */
 		  var LARGE_ARRAY_SIZE = 200;
 		
-		  /** Error message constants. */
-		  var CORE_ERROR_TEXT = 'Unsupported core-js use. Try https://github.com/es-shims.',
-		      FUNC_ERROR_TEXT = 'Expected a function';
+		  /** Used as the `TypeError` message for "Functions" methods. */
+		  var FUNC_ERROR_TEXT = 'Expected a function';
 		
 		  /** Used to stand-in for `undefined` hash values. */
 		  var HASH_UNDEFINED = '__lodash_hash_undefined__';
-		
-		  /** Used as the maximum memoize cache size. */
-		  var MAX_MEMOIZE_SIZE = 500;
 		
 		  /** Used as the internal argument placeholder. */
 		  var PLACEHOLDER = '__lodash_placeholder__';
@@ -2956,7 +2912,7 @@
 		      DEFAULT_TRUNC_OMISSION = '...';
 		
 		  /** Used to detect hot functions by number of calls within a span of milliseconds. */
-		  var HOT_COUNT = 500,
+		  var HOT_COUNT = 150,
 		      HOT_SPAN = 16;
 		
 		  /** Used to indicate the type of lazy iteratees. */
@@ -3000,7 +2956,6 @@
 		      numberTag = '[object Number]',
 		      objectTag = '[object Object]',
 		      promiseTag = '[object Promise]',
-		      proxyTag = '[object Proxy]',
 		      regexpTag = '[object RegExp]',
 		      setTag = '[object Set]',
 		      stringTag = '[object String]',
@@ -3026,8 +2981,8 @@
 		      reEmptyStringTrailing = /(__e\(.*?\)|\b__t\)) \+\n'';/g;
 		
 		  /** Used to match HTML entities and HTML characters. */
-		  var reEscapedHtml = /&(?:amp|lt|gt|quot|#39);/g,
-		      reUnescapedHtml = /[&<>"']/g,
+		  var reEscapedHtml = /&(?:amp|lt|gt|quot|#39|#96);/g,
+		      reUnescapedHtml = /[&<>"'`]/g,
 		      reHasEscapedHtml = RegExp(reEscapedHtml.source),
 		      reHasUnescapedHtml = RegExp(reUnescapedHtml.source);
 		
@@ -3044,7 +2999,7 @@
 		
 		  /**
 		   * Used to match `RegExp`
-		   * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+		   * [syntax characters](http://ecma-international.org/ecma-262/6.0/#sec-patterns).
 		   */
 		  var reRegExpChar = /[\\^$.*+?()[\]{}|]/g,
 		      reHasRegExpChar = RegExp(reRegExpChar.source);
@@ -3059,20 +3014,23 @@
 		      reWrapDetails = /\{\n\/\* \[wrapped with (.+)\] \*/,
 		      reSplitDetails = /,? & /;
 		
-		  /** Used to match words composed of alphanumeric characters. */
-		  var reAsciiWord = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
+		  /** Used to match non-compound words composed of alphanumeric characters. */
+		  var reBasicWord = /[a-zA-Z0-9]+/g;
 		
 		  /** Used to match backslashes in property paths. */
 		  var reEscapeChar = /\\(\\)?/g;
 		
 		  /**
 		   * Used to match
-		   * [ES template delimiters](http://ecma-international.org/ecma-262/7.0/#sec-template-literal-lexical-components).
+		   * [ES template delimiters](http://ecma-international.org/ecma-262/6.0/#sec-template-literal-lexical-components).
 		   */
 		  var reEsTemplate = /\$\{([^\\}]*(?:\\.[^\\}]*)*)\}/g;
 		
 		  /** Used to match `RegExp` flags from their coerced string values. */
 		  var reFlags = /\w*$/;
+		
+		  /** Used to detect hexadecimal string values. */
+		  var reHasHexPrefix = /^0x/i;
 		
 		  /** Used to detect bad signed hexadecimal string values. */
 		  var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
@@ -3089,8 +3047,8 @@
 		  /** Used to detect unsigned integer values. */
 		  var reIsUint = /^(?:0|[1-9]\d*)$/;
 		
-		  /** Used to match Latin Unicode letters (excluding mathematical operators). */
-		  var reLatin = /[\xc0-\xd6\xd8-\xf6\xf8-\xff\u0100-\u017f]/g;
+		  /** Used to match latin-1 supplementary letters (excluding mathematical operators). */
+		  var reLatin1 = /[\xc0-\xd6\xd8-\xde\xdf-\xf6\xf8-\xff]/g;
 		
 		  /** Used to ensure capturing order of template delimiters. */
 		  var reNoMatch = /($^)/;
@@ -3151,10 +3109,10 @@
 		  var reComboMark = RegExp(rsCombo, 'g');
 		
 		  /** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
-		  var reUnicode = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
+		  var reComplexSymbol = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
 		
 		  /** Used to match complex or compound words. */
-		  var reUnicodeWord = RegExp([
+		  var reComplexWord = RegExp([
 		    rsUpper + '?' + rsLower + '+' + rsOptLowerContr + '(?=' + [rsBreak, rsUpper, '$'].join('|') + ')',
 		    rsUpperMisc + '+' + rsOptUpperContr + '(?=' + [rsBreak, rsUpper + rsLowerMisc, '$'].join('|') + ')',
 		    rsUpper + '?' + rsLowerMisc + '+' + rsOptLowerContr,
@@ -3164,17 +3122,17 @@
 		  ].join('|'), 'g');
 		
 		  /** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
-		  var reHasUnicode = RegExp('[' + rsZWJ + rsAstralRange  + rsComboMarksRange + rsComboSymbolsRange + rsVarRange + ']');
+		  var reHasComplexSymbol = RegExp('[' + rsZWJ + rsAstralRange  + rsComboMarksRange + rsComboSymbolsRange + rsVarRange + ']');
 		
 		  /** Used to detect strings that need a more robust regexp to match words. */
-		  var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
+		  var reHasComplexWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
 		
 		  /** Used to assign default `context` object properties. */
 		  var contextProps = [
 		    'Array', 'Buffer', 'DataView', 'Date', 'Error', 'Float32Array', 'Float64Array',
 		    'Function', 'Int8Array', 'Int16Array', 'Int32Array', 'Map', 'Math', 'Object',
-		    'Promise', 'RegExp', 'Set', 'String', 'Symbol', 'TypeError', 'Uint8Array',
-		    'Uint8ClampedArray', 'Uint16Array', 'Uint32Array', 'WeakMap',
+		    'Promise', 'Reflect', 'RegExp', 'Set', 'String', 'Symbol', 'TypeError',
+		    'Uint8Array', 'Uint8ClampedArray', 'Uint16Array', 'Uint32Array', 'WeakMap',
 		    '_', 'clearTimeout', 'isFinite', 'parseInt', 'setTimeout'
 		  ];
 		
@@ -3213,17 +3171,16 @@
 		  cloneableTags[errorTag] = cloneableTags[funcTag] =
 		  cloneableTags[weakMapTag] = false;
 		
-		  /** Used to map Latin Unicode letters to basic Latin letters. */
+		  /** Used to map latin-1 supplementary letters to basic latin letters. */
 		  var deburredLetters = {
-		    // Latin-1 Supplement block.
 		    '\xc0': 'A',  '\xc1': 'A', '\xc2': 'A', '\xc3': 'A', '\xc4': 'A', '\xc5': 'A',
 		    '\xe0': 'a',  '\xe1': 'a', '\xe2': 'a', '\xe3': 'a', '\xe4': 'a', '\xe5': 'a',
 		    '\xc7': 'C',  '\xe7': 'c',
 		    '\xd0': 'D',  '\xf0': 'd',
 		    '\xc8': 'E',  '\xc9': 'E', '\xca': 'E', '\xcb': 'E',
 		    '\xe8': 'e',  '\xe9': 'e', '\xea': 'e', '\xeb': 'e',
-		    '\xcc': 'I',  '\xcd': 'I', '\xce': 'I', '\xcf': 'I',
-		    '\xec': 'i',  '\xed': 'i', '\xee': 'i', '\xef': 'i',
+		    '\xcC': 'I',  '\xcd': 'I', '\xce': 'I', '\xcf': 'I',
+		    '\xeC': 'i',  '\xed': 'i', '\xee': 'i', '\xef': 'i',
 		    '\xd1': 'N',  '\xf1': 'n',
 		    '\xd2': 'O',  '\xd3': 'O', '\xd4': 'O', '\xd5': 'O', '\xd6': 'O', '\xd8': 'O',
 		    '\xf2': 'o',  '\xf3': 'o', '\xf4': 'o', '\xf5': 'o', '\xf6': 'o', '\xf8': 'o',
@@ -3232,43 +3189,7 @@
 		    '\xdd': 'Y',  '\xfd': 'y', '\xff': 'y',
 		    '\xc6': 'Ae', '\xe6': 'ae',
 		    '\xde': 'Th', '\xfe': 'th',
-		    '\xdf': 'ss',
-		    // Latin Extended-A block.
-		    '\u0100': 'A',  '\u0102': 'A', '\u0104': 'A',
-		    '\u0101': 'a',  '\u0103': 'a', '\u0105': 'a',
-		    '\u0106': 'C',  '\u0108': 'C', '\u010a': 'C', '\u010c': 'C',
-		    '\u0107': 'c',  '\u0109': 'c', '\u010b': 'c', '\u010d': 'c',
-		    '\u010e': 'D',  '\u0110': 'D', '\u010f': 'd', '\u0111': 'd',
-		    '\u0112': 'E',  '\u0114': 'E', '\u0116': 'E', '\u0118': 'E', '\u011a': 'E',
-		    '\u0113': 'e',  '\u0115': 'e', '\u0117': 'e', '\u0119': 'e', '\u011b': 'e',
-		    '\u011c': 'G',  '\u011e': 'G', '\u0120': 'G', '\u0122': 'G',
-		    '\u011d': 'g',  '\u011f': 'g', '\u0121': 'g', '\u0123': 'g',
-		    '\u0124': 'H',  '\u0126': 'H', '\u0125': 'h', '\u0127': 'h',
-		    '\u0128': 'I',  '\u012a': 'I', '\u012c': 'I', '\u012e': 'I', '\u0130': 'I',
-		    '\u0129': 'i',  '\u012b': 'i', '\u012d': 'i', '\u012f': 'i', '\u0131': 'i',
-		    '\u0134': 'J',  '\u0135': 'j',
-		    '\u0136': 'K',  '\u0137': 'k', '\u0138': 'k',
-		    '\u0139': 'L',  '\u013b': 'L', '\u013d': 'L', '\u013f': 'L', '\u0141': 'L',
-		    '\u013a': 'l',  '\u013c': 'l', '\u013e': 'l', '\u0140': 'l', '\u0142': 'l',
-		    '\u0143': 'N',  '\u0145': 'N', '\u0147': 'N', '\u014a': 'N',
-		    '\u0144': 'n',  '\u0146': 'n', '\u0148': 'n', '\u014b': 'n',
-		    '\u014c': 'O',  '\u014e': 'O', '\u0150': 'O',
-		    '\u014d': 'o',  '\u014f': 'o', '\u0151': 'o',
-		    '\u0154': 'R',  '\u0156': 'R', '\u0158': 'R',
-		    '\u0155': 'r',  '\u0157': 'r', '\u0159': 'r',
-		    '\u015a': 'S',  '\u015c': 'S', '\u015e': 'S', '\u0160': 'S',
-		    '\u015b': 's',  '\u015d': 's', '\u015f': 's', '\u0161': 's',
-		    '\u0162': 'T',  '\u0164': 'T', '\u0166': 'T',
-		    '\u0163': 't',  '\u0165': 't', '\u0167': 't',
-		    '\u0168': 'U',  '\u016a': 'U', '\u016c': 'U', '\u016e': 'U', '\u0170': 'U', '\u0172': 'U',
-		    '\u0169': 'u',  '\u016b': 'u', '\u016d': 'u', '\u016f': 'u', '\u0171': 'u', '\u0173': 'u',
-		    '\u0174': 'W',  '\u0175': 'w',
-		    '\u0176': 'Y',  '\u0177': 'y', '\u0178': 'Y',
-		    '\u0179': 'Z',  '\u017b': 'Z', '\u017d': 'Z',
-		    '\u017a': 'z',  '\u017c': 'z', '\u017e': 'z',
-		    '\u0132': 'IJ', '\u0133': 'ij',
-		    '\u0152': 'Oe', '\u0153': 'oe',
-		    '\u0149': "'n", '\u017f': 's'
+		    '\xdf': 'ss'
 		  };
 		
 		  /** Used to map characters to HTML entities. */
@@ -3277,7 +3198,8 @@
 		    '<': '&lt;',
 		    '>': '&gt;',
 		    '"': '&quot;',
-		    "'": '&#39;'
+		    "'": '&#39;',
+		    '`': '&#96;'
 		  };
 		
 		  /** Used to map HTML entities to characters. */
@@ -3286,7 +3208,8 @@
 		    '&lt;': '<',
 		    '&gt;': '>',
 		    '&quot;': '"',
-		    '&#39;': "'"
+		    '&#39;': "'",
+		    '&#96;': '`'
 		  };
 		
 		  /** Used to escape characters for inclusion in compiled string literals. */
@@ -3502,7 +3425,7 @@
 		   * specifying an index to search from.
 		   *
 		   * @private
-		   * @param {Array} [array] The array to inspect.
+		   * @param {Array} [array] The array to search.
 		   * @param {*} target The value to search for.
 		   * @returns {boolean} Returns `true` if `target` is found, else `false`.
 		   */
@@ -3515,7 +3438,7 @@
 		   * This function is like `arrayIncludes` except that it accepts a comparator.
 		   *
 		   * @private
-		   * @param {Array} [array] The array to inspect.
+		   * @param {Array} [array] The array to search.
 		   * @param {*} target The value to search for.
 		   * @param {Function} comparator The comparator invoked per element.
 		   * @returns {boolean} Returns `true` if `target` is found, else `false`.
@@ -3642,43 +3565,12 @@
 		  }
 		
 		  /**
-		   * Gets the size of an ASCII `string`.
-		   *
-		   * @private
-		   * @param {string} string The string inspect.
-		   * @returns {number} Returns the string size.
-		   */
-		  var asciiSize = baseProperty('length');
-		
-		  /**
-		   * Converts an ASCII `string` to an array.
-		   *
-		   * @private
-		   * @param {string} string The string to convert.
-		   * @returns {Array} Returns the converted array.
-		   */
-		  function asciiToArray(string) {
-		    return string.split('');
-		  }
-		
-		  /**
-		   * Splits an ASCII `string` into an array of its words.
-		   *
-		   * @private
-		   * @param {string} The string to inspect.
-		   * @returns {Array} Returns the words of `string`.
-		   */
-		  function asciiWords(string) {
-		    return string.match(reAsciiWord) || [];
-		  }
-		
-		  /**
 		   * The base implementation of methods like `_.findKey` and `_.findLastKey`,
 		   * without support for iteratee shorthands, which iterates over `collection`
 		   * using `eachFunc`.
 		   *
 		   * @private
-		   * @param {Array|Object} collection The collection to inspect.
+		   * @param {Array|Object} collection The collection to search.
 		   * @param {Function} predicate The function invoked per iteration.
 		   * @param {Function} eachFunc The function to iterate over `collection`.
 		   * @returns {*} Returns the found element or its key, else `undefined`.
@@ -3699,7 +3591,7 @@
 		   * support for iteratee shorthands.
 		   *
 		   * @private
-		   * @param {Array} array The array to inspect.
+		   * @param {Array} array The array to search.
 		   * @param {Function} predicate The function invoked per iteration.
 		   * @param {number} fromIndex The index to search from.
 		   * @param {boolean} [fromRight] Specify iterating from right to left.
@@ -3721,22 +3613,31 @@
 		   * The base implementation of `_.indexOf` without `fromIndex` bounds checks.
 		   *
 		   * @private
-		   * @param {Array} array The array to inspect.
+		   * @param {Array} array The array to search.
 		   * @param {*} value The value to search for.
 		   * @param {number} fromIndex The index to search from.
 		   * @returns {number} Returns the index of the matched value, else `-1`.
 		   */
 		  function baseIndexOf(array, value, fromIndex) {
-		    return value === value
-		      ? strictIndexOf(array, value, fromIndex)
-		      : baseFindIndex(array, baseIsNaN, fromIndex);
+		    if (value !== value) {
+		      return baseFindIndex(array, baseIsNaN, fromIndex);
+		    }
+		    var index = fromIndex - 1,
+		        length = array.length;
+		
+		    while (++index < length) {
+		      if (array[index] === value) {
+		        return index;
+		      }
+		    }
+		    return -1;
 		  }
 		
 		  /**
 		   * This function is like `baseIndexOf` except that it accepts a comparator.
 		   *
 		   * @private
-		   * @param {Array} array The array to inspect.
+		   * @param {Array} array The array to search.
 		   * @param {*} value The value to search for.
 		   * @param {number} fromIndex The index to search from.
 		   * @param {Function} comparator The comparator invoked per element.
@@ -3934,7 +3835,7 @@
 		  }
 		
 		  /**
-		   * Checks if a `cache` value for `key` exists.
+		   * Checks if a cache value for `key` exists.
 		   *
 		   * @private
 		   * @param {Object} cache The cache to query.
@@ -3992,15 +3893,14 @@
 		
 		    while (length--) {
 		      if (array[length] === placeholder) {
-		        ++result;
+		        result++;
 		      }
 		    }
 		    return result;
 		  }
 		
 		  /**
-		   * Used by `_.deburr` to convert Latin-1 Supplement and Latin Extended-A
-		   * letters to basic Latin letters.
+		   * Used by `_.deburr` to convert latin-1 supplementary letters to basic latin letters.
 		   *
 		   * @private
 		   * @param {string} letter The matched letter to deburr.
@@ -4041,25 +3941,22 @@
 		  }
 		
 		  /**
-		   * Checks if `string` contains Unicode symbols.
+		   * Checks if `value` is a host object in IE < 9.
 		   *
 		   * @private
-		   * @param {string} string The string to inspect.
-		   * @returns {boolean} Returns `true` if a symbol is found, else `false`.
+		   * @param {*} value The value to check.
+		   * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
 		   */
-		  function hasUnicode(string) {
-		    return reHasUnicode.test(string);
-		  }
-		
-		  /**
-		   * Checks if `string` contains a word composed of Unicode symbols.
-		   *
-		   * @private
-		   * @param {string} string The string to inspect.
-		   * @returns {boolean} Returns `true` if a word is found, else `false`.
-		   */
-		  function hasUnicodeWord(string) {
-		    return reHasUnicodeWord.test(string);
+		  function isHostObject(value) {
+		    // Many host objects are `Object` objects that can coerce to strings
+		    // despite having improperly defined `toString` methods.
+		    var result = false;
+		    if (value != null && typeof value.toString != 'function') {
+		      try {
+		        result = !!(value + '');
+		      } catch (e) {}
+		    }
+		    return result;
 		  }
 		
 		  /**
@@ -4097,7 +3994,7 @@
 		  }
 		
 		  /**
-		   * Creates a unary function that invokes `func` with its argument transformed.
+		   * Creates a function that invokes `func` with its first argument transformed.
 		   *
 		   * @private
 		   * @param {Function} func The function to wrap.
@@ -4170,48 +4067,6 @@
 		  }
 		
 		  /**
-		   * A specialized version of `_.indexOf` which performs strict equality
-		   * comparisons of values, i.e. `===`.
-		   *
-		   * @private
-		   * @param {Array} array The array to inspect.
-		   * @param {*} value The value to search for.
-		   * @param {number} fromIndex The index to search from.
-		   * @returns {number} Returns the index of the matched value, else `-1`.
-		   */
-		  function strictIndexOf(array, value, fromIndex) {
-		    var index = fromIndex - 1,
-		        length = array.length;
-		
-		    while (++index < length) {
-		      if (array[index] === value) {
-		        return index;
-		      }
-		    }
-		    return -1;
-		  }
-		
-		  /**
-		   * A specialized version of `_.lastIndexOf` which performs strict equality
-		   * comparisons of values, i.e. `===`.
-		   *
-		   * @private
-		   * @param {Array} array The array to inspect.
-		   * @param {*} value The value to search for.
-		   * @param {number} fromIndex The index to search from.
-		   * @returns {number} Returns the index of the matched value, else `-1`.
-		   */
-		  function strictLastIndexOf(array, value, fromIndex) {
-		    var index = fromIndex + 1;
-		    while (index--) {
-		      if (array[index] === value) {
-		        return index;
-		      }
-		    }
-		    return index;
-		  }
-		
-		  /**
 		   * Gets the number of symbols in `string`.
 		   *
 		   * @private
@@ -4219,9 +4074,14 @@
 		   * @returns {number} Returns the string size.
 		   */
 		  function stringSize(string) {
-		    return hasUnicode(string)
-		      ? unicodeSize(string)
-		      : asciiSize(string);
+		    if (!(string && reHasComplexSymbol.test(string))) {
+		      return string.length;
+		    }
+		    var result = reComplexSymbol.lastIndex = 0;
+		    while (reComplexSymbol.test(string)) {
+		      result++;
+		    }
+		    return result;
 		  }
 		
 		  /**
@@ -4232,9 +4092,7 @@
 		   * @returns {Array} Returns the converted array.
 		   */
 		  function stringToArray(string) {
-		    return hasUnicode(string)
-		      ? unicodeToArray(string)
-		      : asciiToArray(string);
+		    return string.match(reComplexSymbol);
 		  }
 		
 		  /**
@@ -4245,43 +4103,6 @@
 		   * @returns {string} Returns the unescaped character.
 		   */
 		  var unescapeHtmlChar = basePropertyOf(htmlUnescapes);
-		
-		  /**
-		   * Gets the size of a Unicode `string`.
-		   *
-		   * @private
-		   * @param {string} string The string inspect.
-		   * @returns {number} Returns the string size.
-		   */
-		  function unicodeSize(string) {
-		    var result = reUnicode.lastIndex = 0;
-		    while (reUnicode.test(string)) {
-		      ++result;
-		    }
-		    return result;
-		  }
-		
-		  /**
-		   * Converts a Unicode `string` to an array.
-		   *
-		   * @private
-		   * @param {string} string The string to convert.
-		   * @returns {Array} Returns the converted array.
-		   */
-		  function unicodeToArray(string) {
-		    return string.match(reUnicode) || [];
-		  }
-		
-		  /**
-		   * Splits a Unicode `string` into an array of its words.
-		   *
-		   * @private
-		   * @param {string} The string to inspect.
-		   * @returns {Array} Returns the words of `string`.
-		   */
-		  function unicodeWords(string) {
-		    return string.match(reUnicodeWord) || [];
-		  }
 		
 		  /*--------------------------------------------------------------------------*/
 		
@@ -4311,27 +4132,31 @@
 		   * lodash.isFunction(lodash.bar);
 		   * // => true
 		   *
+		   * // Use `context` to stub `Date#getTime` use in `_.now`.
+		   * var stubbed = _.runInContext({
+		   *   'Date': function() {
+		   *     return { 'getTime': stubGetTime };
+		   *   }
+		   * });
+		   *
 		   * // Create a suped-up `defer` in Node.js.
 		   * var defer = _.runInContext({ 'setTimeout': setImmediate }).defer;
 		   */
-		  var runInContext = (function runInContext(context) {
-		    context = context ? _.defaults(root.Object(), context, _.pick(root, contextProps)) : root;
+		  function runInContext(context) {
+		    context = context ? _.defaults({}, context, _.pick(root, contextProps)) : root;
 		
 		    /** Built-in constructor references. */
 		    var Array = context.Array,
 		        Date = context.Date,
 		        Error = context.Error,
-		        Function = context.Function,
 		        Math = context.Math,
-		        Object = context.Object,
 		        RegExp = context.RegExp,
-		        String = context.String,
 		        TypeError = context.TypeError;
 		
 		    /** Used for built-in method references. */
-		    var arrayProto = Array.prototype,
-		        funcProto = Function.prototype,
-		        objectProto = Object.prototype;
+		    var arrayProto = context.Array.prototype,
+		        objectProto = context.Object.prototype,
+		        stringProto = context.String.prototype;
 		
 		    /** Used to detect overreaching core-js shims. */
 		    var coreJsData = context['__core-js_shared__'];
@@ -4343,7 +4168,7 @@
 		    }());
 		
 		    /** Used to resolve the decompiled source of functions. */
-		    var funcToString = funcProto.toString;
+		    var funcToString = context.Function.prototype.toString;
 		
 		    /** Used to check objects for own properties. */
 		    var hasOwnProperty = objectProto.hasOwnProperty;
@@ -4356,7 +4181,7 @@
 		
 		    /**
 		     * Used to resolve the
-		     * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+		     * [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
 		     * of values.
 		     */
 		    var objectToString = objectProto.toString;
@@ -4372,43 +4197,36 @@
 		
 		    /** Built-in value references. */
 		    var Buffer = moduleExports ? context.Buffer : undefined,
+		        Reflect = context.Reflect,
 		        Symbol = context.Symbol,
 		        Uint8Array = context.Uint8Array,
-		        allocUnsafe = Buffer ? Buffer.allocUnsafe : undefined,
-		        getPrototype = overArg(Object.getPrototypeOf, Object),
+		        enumerate = Reflect ? Reflect.enumerate : undefined,
 		        iteratorSymbol = Symbol ? Symbol.iterator : undefined,
-		        objectCreate = Object.create,
+		        objectCreate = context.Object.create,
 		        propertyIsEnumerable = objectProto.propertyIsEnumerable,
 		        splice = arrayProto.splice,
 		        spreadableSymbol = Symbol ? Symbol.isConcatSpreadable : undefined;
 		
-		    var defineProperty = (function() {
-		      try {
-		        var func = getNative(Object, 'defineProperty');
-		        func({}, '', {});
-		        return func;
-		      } catch (e) {}
-		    }());
-		
-		    /** Mocked built-ins. */
-		    var ctxClearTimeout = context.clearTimeout !== root.clearTimeout && context.clearTimeout,
-		        ctxNow = Date && Date.now !== root.Date.now && Date.now,
-		        ctxSetTimeout = context.setTimeout !== root.setTimeout && context.setTimeout;
+		    /** Built-in method references that are mockable. */
+		    var clearTimeout = function(id) { return context.clearTimeout.call(root, id); },
+		        setTimeout = function(func, wait) { return context.setTimeout.call(root, func, wait); };
 		
 		    /* Built-in method references for those with the same name as other `lodash` methods. */
 		    var nativeCeil = Math.ceil,
 		        nativeFloor = Math.floor,
+		        nativeGetPrototype = Object.getPrototypeOf,
 		        nativeGetSymbols = Object.getOwnPropertySymbols,
 		        nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined,
 		        nativeIsFinite = context.isFinite,
 		        nativeJoin = arrayProto.join,
-		        nativeKeys = overArg(Object.keys, Object),
+		        nativeKeys = Object.keys,
 		        nativeMax = Math.max,
 		        nativeMin = Math.min,
-		        nativeNow = Date.now,
 		        nativeParseInt = context.parseInt,
 		        nativeRandom = Math.random,
-		        nativeReverse = arrayProto.reverse;
+		        nativeReplace = stringProto.replace,
+		        nativeReverse = arrayProto.reverse,
+		        nativeSplit = stringProto.split;
 		
 		    /* Built-in method references that are verified to be native. */
 		    var DataView = getNative(context, 'DataView'),
@@ -4416,10 +4234,21 @@
 		        Promise = getNative(context, 'Promise'),
 		        Set = getNative(context, 'Set'),
 		        WeakMap = getNative(context, 'WeakMap'),
-		        nativeCreate = getNative(Object, 'create');
+		        nativeCreate = getNative(context.Object, 'create');
+		
+		    /* Used to set `toString` methods. */
+		    var defineProperty = (function() {
+		      var func = getNative(context.Object, 'defineProperty'),
+		          name = getNative.name;
+		
+		      return (name && name.length > 2) ? func : undefined;
+		    }());
 		
 		    /** Used to store function metadata. */
 		    var metaMap = WeakMap && new WeakMap;
+		
+		    /** Detect if properties shadowing those on `Object.prototype` are non-enumerable. */
+		    var nonEnumShadows = !propertyIsEnumerable.call({ 'valueOf': 1 }, 'valueOf');
 		
 		    /** Used to lookup unminified function names. */
 		    var realNames = {};
@@ -4566,30 +4395,6 @@
 		      }
 		      return new LodashWrapper(value);
 		    }
-		
-		    /**
-		     * The base implementation of `_.create` without support for assigning
-		     * properties to the created object.
-		     *
-		     * @private
-		     * @param {Object} proto The object to inherit from.
-		     * @returns {Object} Returns the new object.
-		     */
-		    var baseCreate = (function() {
-		      function object() {}
-		      return function(proto) {
-		        if (!isObject(proto)) {
-		          return {};
-		        }
-		        if (objectCreate) {
-		          return objectCreate(proto);
-		        }
-		        object.prototype = proto;
-		        var result = new object;
-		        object.prototype = undefined;
-		        return result;
-		      };
-		    }());
 		
 		    /**
 		     * The function whose prototype chain sequence wrappers inherit from.
@@ -4832,7 +4637,6 @@
 		     */
 		    function hashClear() {
 		      this.__data__ = nativeCreate ? nativeCreate(null) : {};
-		      this.size = 0;
 		    }
 		
 		    /**
@@ -4846,9 +4650,7 @@
 		     * @returns {boolean} Returns `true` if the entry was removed, else `false`.
 		     */
 		    function hashDelete(key) {
-		      var result = this.has(key) && delete this.__data__[key];
-		      this.size -= result ? 1 : 0;
-		      return result;
+		      return this.has(key) && delete this.__data__[key];
 		    }
 		
 		    /**
@@ -4895,7 +4697,6 @@
 		     */
 		    function hashSet(key, value) {
 		      var data = this.__data__;
-		      this.size += this.has(key) ? 0 : 1;
 		      data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
 		      return this;
 		    }
@@ -4936,7 +4737,6 @@
 		     */
 		    function listCacheClear() {
 		      this.__data__ = [];
-		      this.size = 0;
 		    }
 		
 		    /**
@@ -4961,7 +4761,6 @@
 		      } else {
 		        splice.call(data, index, 1);
 		      }
-		      --this.size;
 		      return true;
 		    }
 		
@@ -5009,7 +4808,6 @@
 		          index = assocIndexOf(data, key);
 		
 		      if (index < 0) {
-		        ++this.size;
 		        data.push([key, value]);
 		      } else {
 		        data[index][1] = value;
@@ -5052,7 +4850,6 @@
 		     * @memberOf MapCache
 		     */
 		    function mapCacheClear() {
-		      this.size = 0;
 		      this.__data__ = {
 		        'hash': new Hash,
 		        'map': new (Map || ListCache),
@@ -5070,9 +4867,7 @@
 		     * @returns {boolean} Returns `true` if the entry was removed, else `false`.
 		     */
 		    function mapCacheDelete(key) {
-		      var result = getMapData(this, key)['delete'](key);
-		      this.size -= result ? 1 : 0;
-		      return result;
+		      return getMapData(this, key)['delete'](key);
 		    }
 		
 		    /**
@@ -5112,11 +4907,7 @@
 		     * @returns {Object} Returns the map cache instance.
 		     */
 		    function mapCacheSet(key, value) {
-		      var data = getMapData(this, key),
-		          size = data.size;
-		
-		      data.set(key, value);
-		      this.size += data.size == size ? 0 : 1;
+		      getMapData(this, key).set(key, value);
 		      return this;
 		    }
 		
@@ -5189,8 +4980,7 @@
 		     * @param {Array} [entries] The key-value pairs to cache.
 		     */
 		    function Stack(entries) {
-		      var data = this.__data__ = new ListCache(entries);
-		      this.size = data.size;
+		      this.__data__ = new ListCache(entries);
 		    }
 		
 		    /**
@@ -5202,7 +4992,6 @@
 		     */
 		    function stackClear() {
 		      this.__data__ = new ListCache;
-		      this.size = 0;
 		    }
 		
 		    /**
@@ -5215,11 +5004,7 @@
 		     * @returns {boolean} Returns `true` if the entry was removed, else `false`.
 		     */
 		    function stackDelete(key) {
-		      var data = this.__data__,
-		          result = data['delete'](key);
-		
-		      this.size = data.size;
-		      return result;
+		      return this.__data__['delete'](key);
 		    }
 		
 		    /**
@@ -5259,18 +5044,16 @@
 		     * @returns {Object} Returns the stack cache instance.
 		     */
 		    function stackSet(key, value) {
-		      var data = this.__data__;
-		      if (data instanceof ListCache) {
-		        var pairs = data.__data__;
+		      var cache = this.__data__;
+		      if (cache instanceof ListCache) {
+		        var pairs = cache.__data__;
 		        if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
 		          pairs.push([key, value]);
-		          this.size = ++data.size;
 		          return this;
 		        }
-		        data = this.__data__ = new MapCache(pairs);
+		        cache = this.__data__ = new MapCache(pairs);
 		      }
-		      data.set(key, value);
-		      this.size = data.size;
+		      cache.set(key, value);
 		      return this;
 		    }
 		
@@ -5282,76 +5065,6 @@
 		    Stack.prototype.set = stackSet;
 		
 		    /*------------------------------------------------------------------------*/
-		
-		    /**
-		     * Creates an array of the enumerable property names of the array-like `value`.
-		     *
-		     * @private
-		     * @param {*} value The value to query.
-		     * @param {boolean} inherited Specify returning inherited property names.
-		     * @returns {Array} Returns the array of property names.
-		     */
-		    function arrayLikeKeys(value, inherited) {
-		      var isArr = isArray(value),
-		          isArg = !isArr && isArguments(value),
-		          isBuff = !isArr && !isArg && isBuffer(value),
-		          isType = !isArr && !isArg && !isBuff && isTypedArray(value),
-		          skipIndexes = isArr || isArg || isBuff || isType,
-		          result = skipIndexes ? baseTimes(value.length, String) : [],
-		          length = result.length;
-		
-		      for (var key in value) {
-		        if ((inherited || hasOwnProperty.call(value, key)) &&
-		            !(skipIndexes && (
-		               // Safari 9 has enumerable `arguments.length` in strict mode.
-		               key == 'length' ||
-		               // Node.js 0.10 has enumerable non-index properties on buffers.
-		               (isBuff && (key == 'offset' || key == 'parent')) ||
-		               // PhantomJS 2 has enumerable non-index properties on typed arrays.
-		               (isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset')) ||
-		               // Skip index properties.
-		               isIndex(key, length)
-		            ))) {
-		          result.push(key);
-		        }
-		      }
-		      return result;
-		    }
-		
-		    /**
-		     * A specialized version of `_.sample` for arrays.
-		     *
-		     * @private
-		     * @param {Array} array The array to sample.
-		     * @returns {*} Returns the random element.
-		     */
-		    function arraySample(array) {
-		      var length = array.length;
-		      return length ? array[baseRandom(0, length - 1)] : undefined;
-		    }
-		
-		    /**
-		     * A specialized version of `_.sampleSize` for arrays.
-		     *
-		     * @private
-		     * @param {Array} array The array to sample.
-		     * @param {number} n The number of elements to sample.
-		     * @returns {Array} Returns the random elements.
-		     */
-		    function arraySampleSize(array, n) {
-		      return shuffleSelf(copyArray(array), baseClamp(n, 0, array.length));
-		    }
-		
-		    /**
-		     * A specialized version of `_.shuffle` for arrays.
-		     *
-		     * @private
-		     * @param {Array} array The array to shuffle.
-		     * @returns {Array} Returns the new shuffled array.
-		     */
-		    function arrayShuffle(array) {
-		      return shuffleSelf(copyArray(array));
-		    }
 		
 		    /**
 		     * Used by `_.defaults` to customize its `_.assignIn` use.
@@ -5382,14 +5095,14 @@
 		     */
 		    function assignMergeValue(object, key, value) {
 		      if ((value !== undefined && !eq(object[key], value)) ||
-		          (value === undefined && !(key in object))) {
-		        baseAssignValue(object, key, value);
+		          (typeof key == 'number' && value === undefined && !(key in object))) {
+		        object[key] = value;
 		      }
 		    }
 		
 		    /**
 		     * Assigns `value` to `key` of `object` if the existing value is not equivalent
-		     * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+		     * using [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
 		     * for equality comparisons.
 		     *
 		     * @private
@@ -5401,7 +5114,7 @@
 		      var objValue = object[key];
 		      if (!(hasOwnProperty.call(object, key) && eq(objValue, value)) ||
 		          (value === undefined && !(key in object))) {
-		        baseAssignValue(object, key, value);
+		        object[key] = value;
 		      }
 		    }
 		
@@ -5409,7 +5122,7 @@
 		     * Gets the index at which the `key` is found in `array` of key-value pairs.
 		     *
 		     * @private
-		     * @param {Array} array The array to inspect.
+		     * @param {Array} array The array to search.
 		     * @param {*} key The key to search for.
 		     * @returns {number} Returns the index of the matched value, else `-1`.
 		     */
@@ -5452,28 +5165,6 @@
 		     */
 		    function baseAssign(object, source) {
 		      return object && copyObject(source, keys(source), object);
-		    }
-		
-		    /**
-		     * The base implementation of `assignValue` and `assignMergeValue` without
-		     * value checks.
-		     *
-		     * @private
-		     * @param {Object} object The object to modify.
-		     * @param {string} key The key of the property to assign.
-		     * @param {*} value The value to assign.
-		     */
-		    function baseAssignValue(object, key, value) {
-		      if (key == '__proto__' && defineProperty) {
-		        defineProperty(object, key, {
-		          'configurable': true,
-		          'enumerable': true,
-		          'value': value,
-		          'writable': true
-		        });
-		      } else {
-		        object[key] = value;
-		      }
 		    }
 		
 		    /**
@@ -5556,6 +5247,9 @@
 		          return cloneBuffer(value, isDeep);
 		        }
 		        if (tag == objectTag || tag == argsTag || (isFunc && !object)) {
+		          if (isHostObject(value)) {
+		            return object ? value : {};
+		          }
 		          result = initCloneObject(isFunc ? {} : value);
 		          if (!isDeep) {
 		            return copySymbols(value, baseAssign(result, value));
@@ -5575,7 +5269,9 @@
 		      }
 		      stack.set(value, result);
 		
-		      var props = isArr ? undefined : (isFull ? getAllKeys : keys)(value);
+		      if (!isArr) {
+		        var props = isFull ? getAllKeys(value) : keys(value);
+		      }
 		      arrayEach(props || value, function(subValue, key) {
 		        if (props) {
 		          key = subValue;
@@ -5614,17 +5310,30 @@
 		      if (object == null) {
 		        return !length;
 		      }
-		      object = Object(object);
-		      while (length--) {
-		        var key = props[length],
+		      var index = length;
+		      while (index--) {
+		        var key = props[index],
 		            predicate = source[key],
 		            value = object[key];
 		
-		        if ((value === undefined && !(key in object)) || !predicate(value)) {
+		        if ((value === undefined &&
+		            !(key in Object(object))) || !predicate(value)) {
 		          return false;
 		        }
 		      }
 		      return true;
+		    }
+		
+		    /**
+		     * The base implementation of `_.create` without support for assigning
+		     * properties to the created object.
+		     *
+		     * @private
+		     * @param {Object} prototype The object to inherit from.
+		     * @returns {Object} Returns the new object.
+		     */
+		    function baseCreate(proto) {
+		      return isObject(proto) ? objectCreate(proto) : {};
 		    }
 		
 		    /**
@@ -5635,7 +5344,7 @@
 		     * @param {Function} func The function to delay.
 		     * @param {number} wait The number of milliseconds to delay invocation.
 		     * @param {Array} args The arguments to provide to `func`.
-		     * @returns {number|Object} Returns the timer id or timeout object.
+		     * @returns {number} Returns the timer id.
 		     */
 		    function baseDelay(func, wait, args) {
 		      if (typeof func != 'function') {
@@ -5980,7 +5689,12 @@
 		     * @returns {boolean} Returns `true` if `key` exists, else `false`.
 		     */
 		    function baseHas(object, key) {
-		      return object != null && hasOwnProperty.call(object, key);
+		      // Avoid a bug in IE 10-11 where objects with a [[Prototype]] of `null`,
+		      // that are composed entirely of index properties, return `false` for
+		      // `hasOwnProperty` checks of them.
+		      return object != null &&
+		        (hasOwnProperty.call(object, key) ||
+		          (typeof object == 'object' && key in object && getPrototype(object) === null));
 		    }
 		
 		    /**
@@ -6110,17 +5824,6 @@
 		    }
 		
 		    /**
-		     * The base implementation of `_.isArguments`.
-		     *
-		     * @private
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if `value` is an `arguments` object,
-		     */
-		    function baseIsArguments(value) {
-		      return isObjectLike(value) && objectToString.call(value) == argsTag;
-		    }
-		
-		    /**
 		     * The base implementation of `_.isArrayBuffer` without Node.js optimizations.
 		     *
 		     * @private
@@ -6196,17 +5899,10 @@
 		        othTag = getTag(other);
 		        othTag = othTag == argsTag ? objectTag : othTag;
 		      }
-		      var objIsObj = objTag == objectTag,
-		          othIsObj = othTag == objectTag,
+		      var objIsObj = objTag == objectTag && !isHostObject(object),
+		          othIsObj = othTag == objectTag && !isHostObject(other),
 		          isSameTag = objTag == othTag;
 		
-		      if (isSameTag && isBuffer(object)) {
-		        if (!isBuffer(other)) {
-		          return false;
-		        }
-		        objIsArr = true;
-		        objIsObj = false;
-		      }
 		      if (isSameTag && !objIsObj) {
 		        stack || (stack = new Stack);
 		        return (objIsArr || isTypedArray(object))
@@ -6309,7 +6005,7 @@
 		      if (!isObject(value) || isMasked(value)) {
 		        return false;
 		      }
-		      var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
+		      var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
 		      return pattern.test(toSource(value));
 		    }
 		
@@ -6372,45 +6068,38 @@
 		    }
 		
 		    /**
-		     * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
+		     * The base implementation of `_.keys` which doesn't skip the constructor
+		     * property of prototypes or treat sparse arrays as dense.
 		     *
 		     * @private
 		     * @param {Object} object The object to query.
 		     * @returns {Array} Returns the array of property names.
 		     */
-		    function baseKeys(object) {
-		      if (!isPrototype(object)) {
-		        return nativeKeys(object);
-		      }
-		      var result = [];
-		      for (var key in Object(object)) {
-		        if (hasOwnProperty.call(object, key) && key != 'constructor') {
-		          result.push(key);
-		        }
-		      }
-		      return result;
-		    }
+		    var baseKeys = overArg(nativeKeys, Object);
 		
 		    /**
-		     * The base implementation of `_.keysIn` which doesn't treat sparse arrays as dense.
+		     * The base implementation of `_.keysIn` which doesn't skip the constructor
+		     * property of prototypes or treat sparse arrays as dense.
 		     *
 		     * @private
 		     * @param {Object} object The object to query.
 		     * @returns {Array} Returns the array of property names.
 		     */
 		    function baseKeysIn(object) {
-		      if (!isObject(object)) {
-		        return nativeKeysIn(object);
-		      }
-		      var isProto = isPrototype(object),
-		          result = [];
+		      object = object == null ? object : Object(object);
 		
+		      var result = [];
 		      for (var key in object) {
-		        if (!(key == 'constructor' && (isProto || !hasOwnProperty.call(object, key)))) {
-		          result.push(key);
-		        }
+		        result.push(key);
 		      }
 		      return result;
+		    }
+		
+		    // Fallback for IE < 9 with es6-shim.
+		    if (enumerate && !propertyIsEnumerable.call({ 'valueOf': 1 }, 'valueOf')) {
+		      baseKeysIn = function(object) {
+		        return iteratorToArray(enumerate(object));
+		      };
 		    }
 		
 		    /**
@@ -6496,7 +6185,14 @@
 		      if (object === source) {
 		        return;
 		      }
-		      baseFor(source, function(srcValue, key) {
+		      if (!(isArray(source) || isTypedArray(source))) {
+		        var props = keysIn(source);
+		      }
+		      arrayEach(props || source, function(srcValue, key) {
+		        if (props) {
+		          key = srcValue;
+		          srcValue = source[key];
+		        }
 		        if (isObject(srcValue)) {
 		          stack || (stack = new Stack);
 		          baseMergeDeep(object, source, key, srcIndex, baseMerge, customizer, stack);
@@ -6511,7 +6207,7 @@
 		          }
 		          assignMergeValue(object, key, newValue);
 		        }
-		      }, keysIn);
+		      });
 		    }
 		
 		    /**
@@ -6545,37 +6241,29 @@
 		      var isCommon = newValue === undefined;
 		
 		      if (isCommon) {
-		        var isArr = isArray(srcValue),
-		            isBuff = !isArr && isBuffer(srcValue),
-		            isTyped = !isArr && !isBuff && isTypedArray(srcValue);
-		
 		        newValue = srcValue;
-		        if (isArr || isBuff || isTyped) {
+		        if (isArray(srcValue) || isTypedArray(srcValue)) {
 		          if (isArray(objValue)) {
 		            newValue = objValue;
 		          }
 		          else if (isArrayLikeObject(objValue)) {
 		            newValue = copyArray(objValue);
 		          }
-		          else if (isBuff) {
-		            isCommon = false;
-		            newValue = cloneBuffer(srcValue, true);
-		          }
-		          else if (isTyped) {
-		            isCommon = false;
-		            newValue = cloneTypedArray(srcValue, true);
-		          }
 		          else {
-		            newValue = [];
+		            isCommon = false;
+		            newValue = baseClone(srcValue, true);
 		          }
 		        }
 		        else if (isPlainObject(srcValue) || isArguments(srcValue)) {
-		          newValue = objValue;
 		          if (isArguments(objValue)) {
 		            newValue = toPlainObject(objValue);
 		          }
 		          else if (!isObject(objValue) || (srcIndex && isFunction(objValue))) {
-		            newValue = initCloneObject(srcValue);
+		            isCommon = false;
+		            newValue = baseClone(srcValue, true);
+		          }
+		          else {
+		            newValue = objValue;
 		          }
 		        }
 		        else {
@@ -6668,7 +6356,7 @@
 		            value = object[key];
 		
 		        if (predicate(value, key)) {
-		          baseAssignValue(result, key, value);
+		          result[key] = value;
 		        }
 		      }
 		      return result;
@@ -6834,47 +6522,37 @@
 		     * @returns {Function} Returns the new function.
 		     */
 		    function baseRest(func, start) {
-		      return setToString(overRest(func, start, identity), func + '');
-		    }
+		      start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
+		      return function() {
+		        var args = arguments,
+		            index = -1,
+		            length = nativeMax(args.length - start, 0),
+		            array = Array(length);
 		
-		    /**
-		     * The base implementation of `_.sample`.
-		     *
-		     * @private
-		     * @param {Array|Object} collection The collection to sample.
-		     * @returns {*} Returns the random element.
-		     */
-		    function baseSample(collection) {
-		      return arraySample(values(collection));
-		    }
-		
-		    /**
-		     * The base implementation of `_.sampleSize` without param guards.
-		     *
-		     * @private
-		     * @param {Array|Object} collection The collection to sample.
-		     * @param {number} n The number of elements to sample.
-		     * @returns {Array} Returns the random elements.
-		     */
-		    function baseSampleSize(collection, n) {
-		      var array = values(collection);
-		      return shuffleSelf(array, baseClamp(n, 0, array.length));
+		        while (++index < length) {
+		          array[index] = args[start + index];
+		        }
+		        index = -1;
+		        var otherArgs = Array(start + 1);
+		        while (++index < start) {
+		          otherArgs[index] = args[index];
+		        }
+		        otherArgs[start] = array;
+		        return apply(func, this, otherArgs);
+		      };
 		    }
 		
 		    /**
 		     * The base implementation of `_.set`.
 		     *
 		     * @private
-		     * @param {Object} object The object to modify.
+		     * @param {Object} object The object to query.
 		     * @param {Array|string} path The path of the property to set.
 		     * @param {*} value The value to set.
 		     * @param {Function} [customizer] The function to customize path creation.
 		     * @returns {Object} Returns `object`.
 		     */
 		    function baseSet(object, path, value, customizer) {
-		      if (!isObject(object)) {
-		        return object;
-		      }
 		      path = isKey(path, object) ? [path] : castPath(path);
 		
 		      var index = -1,
@@ -6883,26 +6561,27 @@
 		          nested = object;
 		
 		      while (nested != null && ++index < length) {
-		        var key = toKey(path[index]),
-		            newValue = value;
-		
-		        if (index != lastIndex) {
-		          var objValue = nested[key];
-		          newValue = customizer ? customizer(objValue, key, nested) : undefined;
-		          if (newValue === undefined) {
-		            newValue = isObject(objValue)
-		              ? objValue
-		              : (isIndex(path[index + 1]) ? [] : {});
+		        var key = toKey(path[index]);
+		        if (isObject(nested)) {
+		          var newValue = value;
+		          if (index != lastIndex) {
+		            var objValue = nested[key];
+		            newValue = customizer ? customizer(objValue, key, nested) : undefined;
+		            if (newValue === undefined) {
+		              newValue = objValue == null
+		                ? (isIndex(path[index + 1]) ? [] : {})
+		                : objValue;
+		            }
 		          }
+		          assignValue(nested, key, newValue);
 		        }
-		        assignValue(nested, key, newValue);
 		        nested = nested[key];
 		      }
 		      return object;
 		    }
 		
 		    /**
-		     * The base implementation of `setData` without support for hot loop shorting.
+		     * The base implementation of `setData` without support for hot loop detection.
 		     *
 		     * @private
 		     * @param {Function} func The function to associate metadata with.
@@ -6913,34 +6592,6 @@
 		      metaMap.set(func, data);
 		      return func;
 		    };
-		
-		    /**
-		     * The base implementation of `setToString` without support for hot loop shorting.
-		     *
-		     * @private
-		     * @param {Function} func The function to modify.
-		     * @param {Function} string The `toString` result.
-		     * @returns {Function} Returns `func`.
-		     */
-		    var baseSetToString = !defineProperty ? identity : function(func, string) {
-		      return defineProperty(func, 'toString', {
-		        'configurable': true,
-		        'enumerable': false,
-		        'value': constant(string),
-		        'writable': true
-		      });
-		    };
-		
-		    /**
-		     * The base implementation of `_.shuffle`.
-		     *
-		     * @private
-		     * @param {Array|Object} collection The collection to shuffle.
-		     * @returns {Array} Returns the new shuffled array.
-		     */
-		    function baseShuffle(collection) {
-		      return shuffleSelf(values(collection));
-		    }
 		
 		    /**
 		     * The base implementation of `_.slice` without an iteratee call guard.
@@ -7135,10 +6786,6 @@
 		      if (typeof value == 'string') {
 		        return value;
 		      }
-		      if (isArray(value)) {
-		        // Recursively convert values (susceptible to call stack limits).
-		        return arrayMap(value, baseToString) + '';
-		      }
 		      if (isSymbol(value)) {
 		        return symbolToString ? symbolToString.call(value) : '';
 		      }
@@ -7220,14 +6867,14 @@
 		      object = parent(object, path);
 		
 		      var key = toKey(last(path));
-		      return !(object != null && hasOwnProperty.call(object, key)) || delete object[key];
+		      return !(object != null && baseHas(object, key)) || delete object[key];
 		    }
 		
 		    /**
 		     * The base implementation of `_.update`.
 		     *
 		     * @private
-		     * @param {Object} object The object to modify.
+		     * @param {Object} object The object to query.
 		     * @param {Array|string} path The path of the property to update.
 		     * @param {Function} updater The function to produce the updated value.
 		     * @param {Function} [customizer] The function to customize path creation.
@@ -7361,17 +7008,6 @@
 		    }
 		
 		    /**
-		     * A `baseRest` alias which can be replaced with `identity` by module
-		     * replacement plugins.
-		     *
-		     * @private
-		     * @type {Function}
-		     * @param {Function} func The function to apply a rest parameter to.
-		     * @returns {Function} Returns the new function.
-		     */
-		    var castRest = baseRest;
-		
-		    /**
 		     * Casts `array` to a slice if it's needed.
 		     *
 		     * @private
@@ -7387,16 +7023,6 @@
 		    }
 		
 		    /**
-		     * A simple wrapper around the global [`clearTimeout`](https://mdn.io/clearTimeout).
-		     *
-		     * @private
-		     * @param {number|Object} id The timer id or timeout object of the timer to clear.
-		     */
-		    var clearTimeout = ctxClearTimeout || function(id) {
-		      return root.clearTimeout(id);
-		    };
-		
-		    /**
 		     * Creates a clone of  `buffer`.
 		     *
 		     * @private
@@ -7408,9 +7034,7 @@
 		      if (isDeep) {
 		        return buffer.slice();
 		      }
-		      var length = buffer.length,
-		          result = allocUnsafe ? allocUnsafe(length) : new buffer.constructor(length);
-		
+		      var result = new buffer.constructor(buffer.length);
 		      buffer.copy(result);
 		      return result;
 		    }
@@ -7687,7 +7311,6 @@
 		     * @returns {Object} Returns `object`.
 		     */
 		    function copyObject(source, props, object, customizer) {
-		      var isNew = !object;
 		      object || (object = {});
 		
 		      var index = -1,
@@ -7700,14 +7323,7 @@
 		          ? customizer(object[key], source[key], key, object, source)
 		          : undefined;
 		
-		        if (newValue === undefined) {
-		          newValue = source[key];
-		        }
-		        if (isNew) {
-		          baseAssignValue(object, key, newValue);
-		        } else {
-		          assignValue(object, key, newValue);
-		        }
+		        assignValue(object, key, newValue === undefined ? source[key] : newValue);
 		      }
 		      return object;
 		    }
@@ -7859,7 +7475,7 @@
 		      return function(string) {
 		        string = toString(string);
 		
-		        var strSymbols = hasUnicode(string)
+		        var strSymbols = reHasComplexSymbol.test(string)
 		          ? stringToArray(string)
 		          : undefined;
 		
@@ -7899,7 +7515,7 @@
 		    function createCtor(Ctor) {
 		      return function() {
 		        // Use a `switch` statement to work with class constructors. See
-		        // http://ecma-international.org/ecma-262/7.0/#sec-ecmascript-function-objects-call-thisargument-argumentslist
+		        // http://ecma-international.org/ecma-262/6.0/#sec-ecmascript-function-objects-call-thisargument-argumentslist
 		        // for more details.
 		        var args = arguments;
 		        switch (args.length) {
@@ -7986,7 +7602,9 @@
 		     * @returns {Function} Returns the new flow function.
 		     */
 		    function createFlow(fromRight) {
-		      return flatRest(function(funcs) {
+		      return baseRest(function(funcs) {
+		        funcs = baseFlatten(funcs, 1);
+		
 		        var length = funcs.length,
 		            index = length,
 		            prereq = LodashWrapper.prototype.thru;
@@ -8169,8 +7787,11 @@
 		     * @returns {Function} Returns the new over function.
 		     */
 		    function createOver(arrayFunc) {
-		      return flatRest(function(iteratees) {
-		        iteratees = arrayMap(iteratees, baseUnary(getIteratee()));
+		      return baseRest(function(iteratees) {
+		        iteratees = (iteratees.length == 1 && isArray(iteratees[0]))
+		          ? arrayMap(iteratees[0], baseUnary(getIteratee()))
+		          : arrayMap(baseFlatten(iteratees, 1), baseUnary(getIteratee()));
+		
 		        return baseRest(function(args) {
 		          var thisArg = this;
 		          return arrayFunc(iteratees, function(iteratee) {
@@ -8197,7 +7818,7 @@
 		        return charsLength ? baseRepeat(chars, length) : chars;
 		      }
 		      var result = baseRepeat(chars, nativeCeil(length / stringSize(chars)));
-		      return hasUnicode(chars)
+		      return reHasComplexSymbol.test(chars)
 		        ? castSlice(stringToArray(result), 0, length).join('')
 		        : result.slice(0, length);
 		    }
@@ -8513,9 +8134,9 @@
 		        // Recursively compare arrays (susceptible to call stack limits).
 		        if (seen) {
 		          if (!arraySome(other, function(othValue, othIndex) {
-		                if (!cacheHas(seen, othIndex) &&
+		                if (!seen.has(othIndex) &&
 		                    (arrValue === othValue || equalFunc(arrValue, othValue, customizer, bitmask, stack))) {
-		                  return seen.push(othIndex);
+		                  return seen.add(othIndex);
 		                }
 		              })) {
 		            result = false;
@@ -8582,7 +8203,7 @@
 		        case regexpTag:
 		        case stringTag:
 		          // Coerce regexes to strings and treat strings, primitives and objects,
-		          // as equal. See http://www.ecma-international.org/ecma-262/7.0/#sec-regexp.prototype.tostring
+		          // as equal. See http://www.ecma-international.org/ecma-262/6.0/#sec-regexp.prototype.tostring
 		          // for more details.
 		          return object == (other + '');
 		
@@ -8644,7 +8265,7 @@
 		      var index = objLength;
 		      while (index--) {
 		        var key = objProps[index];
-		        if (!(isPartial ? key in other : hasOwnProperty.call(other, key))) {
+		        if (!(isPartial ? key in other : baseHas(other, key))) {
 		          return false;
 		        }
 		      }
@@ -8693,17 +8314,6 @@
 		      stack['delete'](object);
 		      stack['delete'](other);
 		      return result;
-		    }
-		
-		    /**
-		     * A specialized version of `baseRest` which flattens the rest array.
-		     *
-		     * @private
-		     * @param {Function} func The function to apply a rest parameter to.
-		     * @returns {Function} Returns the new function.
-		     */
-		    function flatRest(func) {
-		      return setToString(overRest(func, undefined, flatten), func + '');
 		    }
 		
 		    /**
@@ -8792,6 +8402,19 @@
 		    }
 		
 		    /**
+		     * Gets the "length" property value of `object`.
+		     *
+		     * **Note:** This function is used to avoid a
+		     * [JIT bug](https://bugs.webkit.org/show_bug.cgi?id=142792) that affects
+		     * Safari on at least iOS 8.1-8.3 ARM64.
+		     *
+		     * @private
+		     * @param {Object} object The object to query.
+		     * @returns {*} Returns the "length" value.
+		     */
+		    var getLength = baseProperty('length');
+		
+		    /**
 		     * Gets the data for `map`.
 		     *
 		     * @private
@@ -8840,6 +8463,15 @@
 		    }
 		
 		    /**
+		     * Gets the `[[Prototype]]` of `value`.
+		     *
+		     * @private
+		     * @param {*} value The value to query.
+		     * @returns {null|Object} Returns the `[[Prototype]]`.
+		     */
+		    var getPrototype = overArg(nativeGetPrototype, Object);
+		
+		    /**
 		     * Creates an array of the own enumerable symbol properties of `object`.
 		     *
 		     * @private
@@ -8874,7 +8506,8 @@
 		     */
 		    var getTag = baseGetTag;
 		
-		    // Fallback for data views, maps, sets, and weak maps in IE 11 and promises in Node.js < 6.
+		    // Fallback for data views, maps, sets, and weak maps in IE 11,
+		    // for data views in Edge, and promises in Node.js.
 		    if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
 		        (Map && getTag(new Map) != mapTag) ||
 		        (Promise && getTag(Promise.resolve()) != promiseTag) ||
@@ -8950,9 +8583,9 @@
 		    function hasPath(object, path, hasFunc) {
 		      path = isKey(path, object) ? [path] : castPath(path);
 		
-		      var index = -1,
-		          length = path.length,
-		          result = false;
+		      var result,
+		          index = -1,
+		          length = path.length;
 		
 		      while (++index < length) {
 		        var key = toKey(path[index]);
@@ -8961,12 +8594,12 @@
 		        }
 		        object = object[key];
 		      }
-		      if (result || ++index != length) {
+		      if (result) {
 		        return result;
 		      }
-		      length = object ? object.length : 0;
+		      var length = object ? object.length : 0;
 		      return !!length && isLength(length) && isIndex(key, length) &&
-		        (isArray(object) || isArguments(object));
+		        (isArray(object) || isString(object) || isArguments(object));
 		    }
 		
 		    /**
@@ -9051,6 +8684,23 @@
 		    }
 		
 		    /**
+		     * Creates an array of index keys for `object` values of arrays,
+		     * `arguments` objects, and strings, otherwise `null` is returned.
+		     *
+		     * @private
+		     * @param {Object} object The object to query.
+		     * @returns {Array|null} Returns index keys, else `null`.
+		     */
+		    function indexKeys(object) {
+		      var length = object ? object.length : undefined;
+		      if (isLength(length) &&
+		          (isArray(object) || isString(object) || isArguments(object))) {
+		        return baseTimes(length, String);
+		      }
+		      return null;
+		    }
+		
+		    /**
 		     * Inserts wrapper `details` in a comment at the top of the `source` body.
 		     *
 		     * @private
@@ -9059,11 +8709,9 @@
 		     * @returns {string} Returns the modified source.
 		     */
 		    function insertWrapDetails(source, details) {
-		      var length = details.length;
-		      if (!length) {
-		        return source;
-		      }
-		      var lastIndex = length - 1;
+		      var length = details.length,
+		          lastIndex = length - 1;
+		
 		      details[lastIndex] = (length > 1 ? '& ' : '') + details[lastIndex];
 		      details = details.join(length > 2 ? ', ' : ' ');
 		      return source.replace(reWrapComment, '{\n/* [wrapped with ' + details + '] */\n');
@@ -9243,26 +8891,6 @@
 		    }
 		
 		    /**
-		     * A specialized version of `_.memoize` which clears the memoized function's
-		     * cache when it exceeds `MAX_MEMOIZE_SIZE`.
-		     *
-		     * @private
-		     * @param {Function} func The function to have its output memoized.
-		     * @returns {Function} Returns the new memoized function.
-		     */
-		    function memoizeCapped(func) {
-		      var result = memoize(func, function(key) {
-		        if (cache.size === MAX_MEMOIZE_SIZE) {
-		          cache.clear();
-		        }
-		        return key;
-		      });
-		
-		      var cache = result.cache;
-		      return result;
-		    }
-		
-		    /**
 		     * Merges the function metadata of `source` into `data`.
 		     *
 		     * Merging metadata reduces the number of wrappers used to invoke a function.
@@ -9357,55 +8985,6 @@
 		    }
 		
 		    /**
-		     * This function is like
-		     * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
-		     * except that it includes inherited enumerable properties.
-		     *
-		     * @private
-		     * @param {Object} object The object to query.
-		     * @returns {Array} Returns the array of property names.
-		     */
-		    function nativeKeysIn(object) {
-		      var result = [];
-		      if (object != null) {
-		        for (var key in Object(object)) {
-		          result.push(key);
-		        }
-		      }
-		      return result;
-		    }
-		
-		    /**
-		     * A specialized version of `baseRest` which transforms the rest array.
-		     *
-		     * @private
-		     * @param {Function} func The function to apply a rest parameter to.
-		     * @param {number} [start=func.length-1] The start position of the rest parameter.
-		     * @param {Function} transform The rest array transform.
-		     * @returns {Function} Returns the new function.
-		     */
-		    function overRest(func, start, transform) {
-		      start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
-		      return function() {
-		        var args = arguments,
-		            index = -1,
-		            length = nativeMax(args.length - start, 0),
-		            array = Array(length);
-		
-		        while (++index < length) {
-		          array[index] = args[start + index];
-		        }
-		        index = -1;
-		        var otherArgs = Array(start + 1);
-		        while (++index < start) {
-		          otherArgs[index] = args[index];
-		        }
-		        otherArgs[start] = transform(array);
-		        return apply(func, this, otherArgs);
-		      };
-		    }
-		
-		    /**
 		     * Gets the parent value at `path` of `object`.
 		     *
 		     * @private
@@ -9453,29 +9032,25 @@
 		     * @param {*} data The metadata.
 		     * @returns {Function} Returns `func`.
 		     */
-		    var setData = shortOut(baseSetData);
+		    var setData = (function() {
+		      var count = 0,
+		          lastCalled = 0;
 		
-		    /**
-		     * A simple wrapper around the global [`setTimeout`](https://mdn.io/setTimeout).
-		     *
-		     * @private
-		     * @param {Function} func The function to delay.
-		     * @param {number} wait The number of milliseconds to delay invocation.
-		     * @returns {number|Object} Returns the timer id or timeout object.
-		     */
-		    var setTimeout = ctxSetTimeout || function(func, wait) {
-		      return root.setTimeout(func, wait);
-		    };
+		      return function(key, value) {
+		        var stamp = now(),
+		            remaining = HOT_SPAN - (stamp - lastCalled);
 		
-		    /**
-		     * Sets the `toString` method of `func` to return `string`.
-		     *
-		     * @private
-		     * @param {Function} func The function to modify.
-		     * @param {Function} string The `toString` result.
-		     * @returns {Function} Returns `func`.
-		     */
-		    var setToString = shortOut(baseSetToString);
+		        lastCalled = stamp;
+		        if (remaining > 0) {
+		          if (++count >= HOT_COUNT) {
+		            return key;
+		          }
+		        } else {
+		          count = 0;
+		        }
+		        return baseSetData(key, value);
+		      };
+		    }());
 		
 		    /**
 		     * Sets the `toString` method of `wrapper` to mimic the source of `reference`
@@ -9487,64 +9062,14 @@
 		     * @param {number} bitmask The bitmask flags. See `createWrap` for more details.
 		     * @returns {Function} Returns `wrapper`.
 		     */
-		    function setWrapToString(wrapper, reference, bitmask) {
+		    var setWrapToString = !defineProperty ? identity : function(wrapper, reference, bitmask) {
 		      var source = (reference + '');
-		      return setToString(wrapper, insertWrapDetails(source, updateWrapDetails(getWrapDetails(source), bitmask)));
-		    }
-		
-		    /**
-		     * Creates a function that'll short out and invoke `identity` instead
-		     * of `func` when it's called `HOT_COUNT` or more times in `HOT_SPAN`
-		     * milliseconds.
-		     *
-		     * @private
-		     * @param {Function} func The function to restrict.
-		     * @returns {Function} Returns the new shortable function.
-		     */
-		    function shortOut(func) {
-		      var count = 0,
-		          lastCalled = 0;
-		
-		      return function() {
-		        var stamp = nativeNow(),
-		            remaining = HOT_SPAN - (stamp - lastCalled);
-		
-		        lastCalled = stamp;
-		        if (remaining > 0) {
-		          if (++count >= HOT_COUNT) {
-		            return arguments[0];
-		          }
-		        } else {
-		          count = 0;
-		        }
-		        return func.apply(undefined, arguments);
-		      };
-		    }
-		
-		    /**
-		     * A specialized version of `_.shuffle` which mutates and sets the size of `array`.
-		     *
-		     * @private
-		     * @param {Array} array The array to shuffle.
-		     * @param {number} [size=array.length] The size of `array`.
-		     * @returns {Array} Returns `array`.
-		     */
-		    function shuffleSelf(array, size) {
-		      var index = -1,
-		          length = array.length,
-		          lastIndex = length - 1;
-		
-		      size = size === undefined ? length : size;
-		      while (++index < size) {
-		        var rand = baseRandom(index, lastIndex),
-		            value = array[rand];
-		
-		        array[rand] = array[index];
-		        array[index] = value;
-		      }
-		      array.length = size;
-		      return array;
-		    }
+		      return defineProperty(wrapper, 'toString', {
+		        'configurable': true,
+		        'enumerable': false,
+		        'value': constant(insertWrapDetails(source, updateWrapDetails(getWrapDetails(source), bitmask)))
+		      });
+		    };
 		
 		    /**
 		     * Converts `string` to a property path array.
@@ -9553,7 +9078,7 @@
 		     * @param {string} string The string to convert.
 		     * @returns {Array} Returns the property path array.
 		     */
-		    var stringToPath = memoizeCapped(function(string) {
+		    var stringToPath = memoize(function(string) {
 		      string = toString(string);
 		
 		      var result = [];
@@ -9732,25 +9257,24 @@
 		     * // => [1]
 		     */
 		    function concat() {
-		      var length = arguments.length;
-		      if (!length) {
-		        return [];
-		      }
-		      var args = Array(length - 1),
+		      var length = arguments.length,
+		          args = Array(length ? length - 1 : 0),
 		          array = arguments[0],
 		          index = length;
 		
 		      while (index--) {
 		        args[index - 1] = arguments[index];
 		      }
-		      return arrayPush(isArray(array) ? copyArray(array) : [array], baseFlatten(args, 1));
+		      return length
+		        ? arrayPush(isArray(array) ? copyArray(array) : [array], baseFlatten(args, 1))
+		        : [];
 		    }
 		
 		    /**
 		     * Creates an array of `array` values not included in the other given arrays
-		     * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
-		     * for equality comparisons. The order and references of result values are
-		     * determined by the first array.
+		     * using [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+		     * for equality comparisons. The order of result values is determined by the
+		     * order they occur in the first array.
 		     *
 		     * **Note:** Unlike `_.pullAll`, this method returns a new array.
 		     *
@@ -9776,9 +9300,8 @@
 		    /**
 		     * This method is like `_.difference` except that it accepts `iteratee` which
 		     * is invoked for each element of `array` and `values` to generate the criterion
-		     * by which they're compared. The order and references of result values are
-		     * determined by the first array. The iteratee is invoked with one argument:
-		     * (value).
+		     * by which they're compared. Result values are chosen from the first array.
+		     * The iteratee is invoked with one argument: (value).
 		     *
 		     * **Note:** Unlike `_.pullAllBy`, this method returns a new array.
 		     *
@@ -9811,9 +9334,9 @@
 		
 		    /**
 		     * This method is like `_.difference` except that it accepts `comparator`
-		     * which is invoked to compare elements of `array` to `values`. The order and
-		     * references of result values are determined by the first array. The comparator
-		     * is invoked with two arguments: (arrVal, othVal).
+		     * which is invoked to compare elements of `array` to `values`. Result values
+		     * are chosen from the first array. The comparator is invoked with two arguments:
+		     * (arrVal, othVal).
 		     *
 		     * **Note:** Unlike `_.pullAllWith`, this method returns a new array.
 		     *
@@ -10043,7 +9566,7 @@
 		     * @memberOf _
 		     * @since 1.1.0
 		     * @category Array
-		     * @param {Array} array The array to inspect.
+		     * @param {Array} array The array to search.
 		     * @param {Function} [predicate=_.identity]
 		     *  The function invoked per iteration.
 		     * @param {number} [fromIndex=0] The index to search from.
@@ -10091,7 +9614,7 @@
 		     * @memberOf _
 		     * @since 2.0.0
 		     * @category Array
-		     * @param {Array} array The array to inspect.
+		     * @param {Array} array The array to search.
 		     * @param {Function} [predicate=_.identity]
 		     *  The function invoked per iteration.
 		     * @param {number} [fromIndex=array.length-1] The index to search from.
@@ -10252,7 +9775,7 @@
 		
 		    /**
 		     * Gets the index at which the first occurrence of `value` is found in `array`
-		     * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+		     * using [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
 		     * for equality comparisons. If `fromIndex` is negative, it's used as the
 		     * offset from the end of `array`.
 		     *
@@ -10260,7 +9783,7 @@
 		     * @memberOf _
 		     * @since 0.1.0
 		     * @category Array
-		     * @param {Array} array The array to inspect.
+		     * @param {Array} array The array to search.
 		     * @param {*} value The value to search for.
 		     * @param {number} [fromIndex=0] The index to search from.
 		     * @returns {number} Returns the index of the matched value, else `-1`.
@@ -10300,15 +9823,14 @@
 		     * // => [1, 2]
 		     */
 		    function initial(array) {
-		      var length = array ? array.length : 0;
-		      return length ? baseSlice(array, 0, -1) : [];
+		      return dropRight(array, 1);
 		    }
 		
 		    /**
 		     * Creates an array of unique values that are included in all given arrays
-		     * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
-		     * for equality comparisons. The order and references of result values are
-		     * determined by the first array.
+		     * using [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+		     * for equality comparisons. The order of result values is determined by the
+		     * order they occur in the first array.
 		     *
 		     * @static
 		     * @memberOf _
@@ -10331,9 +9853,8 @@
 		    /**
 		     * This method is like `_.intersection` except that it accepts `iteratee`
 		     * which is invoked for each element of each `arrays` to generate the criterion
-		     * by which they're compared. The order and references of result values are
-		     * determined by the first array. The iteratee is invoked with one argument:
-		     * (value).
+		     * by which they're compared. Result values are chosen from the first array.
+		     * The iteratee is invoked with one argument: (value).
 		     *
 		     * @static
 		     * @memberOf _
@@ -10367,9 +9888,9 @@
 		
 		    /**
 		     * This method is like `_.intersection` except that it accepts `comparator`
-		     * which is invoked to compare elements of `arrays`. The order and references
-		     * of result values are determined by the first array. The comparator is
-		     * invoked with two arguments: (arrVal, othVal).
+		     * which is invoked to compare elements of `arrays`. Result values are chosen
+		     * from the first array. The comparator is invoked with two arguments:
+		     * (arrVal, othVal).
 		     *
 		     * @static
 		     * @memberOf _
@@ -10446,7 +9967,7 @@
 		     * @memberOf _
 		     * @since 0.1.0
 		     * @category Array
-		     * @param {Array} array The array to inspect.
+		     * @param {Array} array The array to search.
 		     * @param {*} value The value to search for.
 		     * @param {number} [fromIndex=array.length-1] The index to search from.
 		     * @returns {number} Returns the index of the matched value, else `-1`.
@@ -10467,11 +9988,21 @@
 		      var index = length;
 		      if (fromIndex !== undefined) {
 		        index = toInteger(fromIndex);
-		        index = index < 0 ? nativeMax(length + index, 0) : nativeMin(index, length - 1);
+		        index = (
+		          index < 0
+		            ? nativeMax(length + index, 0)
+		            : nativeMin(index, length - 1)
+		        ) + 1;
 		      }
-		      return value === value
-		        ? strictLastIndexOf(array, value, index)
-		        : baseFindIndex(array, baseIsNaN, index, true);
+		      if (value !== value) {
+		        return baseFindIndex(array, baseIsNaN, index - 1, true);
+		      }
+		      while (index--) {
+		        if (array[index] === value) {
+		          return index;
+		        }
+		      }
+		      return -1;
 		    }
 		
 		    /**
@@ -10501,7 +10032,7 @@
 		
 		    /**
 		     * Removes all given values from `array` using
-		     * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+		     * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
 		     * for equality comparisons.
 		     *
 		     * **Note:** Unlike `_.without`, this method mutates `array`. Use `_.remove`
@@ -10633,7 +10164,9 @@
 		     * console.log(pulled);
 		     * // => ['b', 'd']
 		     */
-		    var pullAt = flatRest(function(array, indexes) {
+		    var pullAt = baseRest(function(array, indexes) {
+		      indexes = baseFlatten(indexes, 1);
+		
 		      var length = array ? array.length : 0,
 		          result = baseAt(array, indexes);
 		
@@ -10812,7 +10345,7 @@
 		     * @memberOf _
 		     * @since 4.0.0
 		     * @category Array
-		     * @param {Array} array The array to inspect.
+		     * @param {Array} array The array to search.
 		     * @param {*} value The value to search for.
 		     * @returns {number} Returns the index of the matched value, else `-1`.
 		     * @example
@@ -10891,7 +10424,7 @@
 		     * @memberOf _
 		     * @since 4.0.0
 		     * @category Array
-		     * @param {Array} array The array to inspect.
+		     * @param {Array} array The array to search.
 		     * @param {*} value The value to search for.
 		     * @returns {number} Returns the index of the matched value, else `-1`.
 		     * @example
@@ -10968,8 +10501,7 @@
 		     * // => [2, 3]
 		     */
 		    function tail(array) {
-		      var length = array ? array.length : 0;
-		      return length ? baseSlice(array, 1, length) : [];
+		      return drop(array, 1);
 		    }
 		
 		    /**
@@ -11126,7 +10658,7 @@
 		
 		    /**
 		     * Creates an array of unique values, in order, from all given arrays using
-		     * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+		     * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
 		     * for equality comparisons.
 		     *
 		     * @static
@@ -11207,10 +10739,9 @@
 		
 		    /**
 		     * Creates a duplicate-free version of an array, using
-		     * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
-		     * for equality comparisons, in which only the first occurrence of each element
-		     * is kept. The order of result values is determined by the order they occur
-		     * in the array.
+		     * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+		     * for equality comparisons, in which only the first occurrence of each
+		     * element is kept.
 		     *
 		     * @static
 		     * @memberOf _
@@ -11232,9 +10763,7 @@
 		    /**
 		     * This method is like `_.uniq` except that it accepts `iteratee` which is
 		     * invoked for each element in `array` to generate the criterion by which
-		     * uniqueness is computed. The order of result values is determined by the
-		     * order they occur in the array. The iteratee is invoked with one argument:
-		     * (value).
+		     * uniqueness is computed. The iteratee is invoked with one argument: (value).
 		     *
 		     * @static
 		     * @memberOf _
@@ -11261,9 +10790,8 @@
 		
 		    /**
 		     * This method is like `_.uniq` except that it accepts `comparator` which
-		     * is invoked to compare elements of `array`. The order of result values is
-		     * determined by the order they occur in the array.The comparator is invoked
-		     * with two arguments: (arrVal, othVal).
+		     * is invoked to compare elements of `array`. The comparator is invoked with
+		     * two arguments: (arrVal, othVal).
 		     *
 		     * @static
 		     * @memberOf _
@@ -11356,7 +10884,7 @@
 		
 		    /**
 		     * Creates an array excluding all given values using
-		     * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+		     * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
 		     * for equality comparisons.
 		     *
 		     * **Note:** Unlike `_.pull`, this method returns a new array.
@@ -11405,9 +10933,8 @@
 		    /**
 		     * This method is like `_.xor` except that it accepts `iteratee` which is
 		     * invoked for each element of each `arrays` to generate the criterion by
-		     * which by which they're compared. The order of result values is determined
-		     * by the order they occur in the arrays. The iteratee is invoked with one
-		     * argument: (value).
+		     * which by which they're compared. The iteratee is invoked with one argument:
+		     * (value).
 		     *
 		     * @static
 		     * @memberOf _
@@ -11436,9 +10963,8 @@
 		
 		    /**
 		     * This method is like `_.xor` except that it accepts `comparator` which is
-		     * invoked to compare elements of `arrays`. The order of result values is
-		     * determined by the order they occur in the arrays. The comparator is invoked
-		     * with two arguments: (arrVal, othVal).
+		     * invoked to compare elements of `arrays`. The comparator is invoked with
+		     * two arguments: (arrVal, othVal).
 		     *
 		     * @static
 		     * @memberOf _
@@ -11655,7 +11181,8 @@
 		     * _(object).at(['a[0].b.c', 'a[1]']).value();
 		     * // => [3, 4]
 		     */
-		    var wrapperAt = flatRest(function(paths) {
+		    var wrapperAt = baseRest(function(paths) {
+		      paths = baseFlatten(paths, 1);
 		      var length = paths.length,
 		          start = length ? paths[0] : 0,
 		          value = this.__wrapped__,
@@ -11920,22 +11447,13 @@
 		     * // => { '3': 2, '5': 1 }
 		     */
 		    var countBy = createAggregator(function(result, value, key) {
-		      if (hasOwnProperty.call(result, key)) {
-		        ++result[key];
-		      } else {
-		        baseAssignValue(result, key, 1);
-		      }
+		      hasOwnProperty.call(result, key) ? ++result[key] : (result[key] = 1);
 		    });
 		
 		    /**
 		     * Checks if `predicate` returns truthy for **all** elements of `collection`.
 		     * Iteration is stopped once `predicate` returns falsey. The predicate is
 		     * invoked with three arguments: (value, index|key, collection).
-		     *
-		     * **Note:** This method returns `true` for
-		     * [empty collections](https://en.wikipedia.org/wiki/Empty_set) because
-		     * [everything is true](https://en.wikipedia.org/wiki/Vacuous_truth) of
-		     * elements of empty collections.
 		     *
 		     * @static
 		     * @memberOf _
@@ -12029,7 +11547,7 @@
 		     * @memberOf _
 		     * @since 0.1.0
 		     * @category Collection
-		     * @param {Array|Object} collection The collection to inspect.
+		     * @param {Array|Object} collection The collection to search.
 		     * @param {Function} [predicate=_.identity]
 		     *  The function invoked per iteration.
 		     * @param {number} [fromIndex=0] The index to search from.
@@ -12067,7 +11585,7 @@
 		     * @memberOf _
 		     * @since 2.0.0
 		     * @category Collection
-		     * @param {Array|Object} collection The collection to inspect.
+		     * @param {Array|Object} collection The collection to search.
 		     * @param {Function} [predicate=_.identity]
 		     *  The function invoked per iteration.
 		     * @param {number} [fromIndex=collection.length-1] The index to search from.
@@ -12179,7 +11697,7 @@
 		     * @see _.forEachRight
 		     * @example
 		     *
-		     * _.forEach([1, 2], function(value) {
+		     * _([1, 2]).forEach(function(value) {
 		     *   console.log(value);
 		     * });
 		     * // => Logs `1` then `2`.
@@ -12247,14 +11765,14 @@
 		      if (hasOwnProperty.call(result, key)) {
 		        result[key].push(value);
 		      } else {
-		        baseAssignValue(result, key, [value]);
+		        result[key] = [value];
 		      }
 		    });
 		
 		    /**
 		     * Checks if `value` is in `collection`. If `collection` is a string, it's
 		     * checked for a substring of `value`, otherwise
-		     * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+		     * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
 		     * is used for equality comparisons. If `fromIndex` is negative, it's used as
 		     * the offset from the end of `collection`.
 		     *
@@ -12262,7 +11780,7 @@
 		     * @memberOf _
 		     * @since 0.1.0
 		     * @category Collection
-		     * @param {Array|Object|string} collection The collection to inspect.
+		     * @param {Array|Object|string} collection The collection to search.
 		     * @param {*} value The value to search for.
 		     * @param {number} [fromIndex=0] The index to search from.
 		     * @param- {Object} [guard] Enables use as an iteratee for methods like `_.reduce`.
@@ -12360,7 +11878,7 @@
 		     * // => { 'left': { 'dir': 'left', 'code': 97 }, 'right': { 'dir': 'right', 'code': 100 } }
 		     */
 		    var keyBy = createAggregator(function(result, value, key) {
-		      baseAssignValue(result, key, value);
+		      result[key] = value;
 		    });
 		
 		    /**
@@ -12620,8 +12138,10 @@
 		     * // => 2
 		     */
 		    function sample(collection) {
-		      var func = isArray(collection) ? arraySample : baseSample;
-		      return func(collection);
+		      var array = isArrayLike(collection) ? collection : values(collection),
+		          length = array.length;
+		
+		      return length > 0 ? array[baseRandom(0, length - 1)] : undefined;
 		    }
 		
 		    /**
@@ -12645,13 +12165,25 @@
 		     * // => [2, 3, 1]
 		     */
 		    function sampleSize(collection, n, guard) {
+		      var index = -1,
+		          result = toArray(collection),
+		          length = result.length,
+		          lastIndex = length - 1;
+		
 		      if ((guard ? isIterateeCall(collection, n, guard) : n === undefined)) {
 		        n = 1;
 		      } else {
-		        n = toInteger(n);
+		        n = baseClamp(toInteger(n), 0, length);
 		      }
-		      var func = isArray(collection) ? arraySampleSize : baseSampleSize;
-		      return func(collection, n);
+		      while (++index < n) {
+		        var rand = baseRandom(index, lastIndex),
+		            value = result[rand];
+		
+		        result[rand] = result[index];
+		        result[index] = value;
+		      }
+		      result.length = n;
+		      return result;
 		    }
 		
 		    /**
@@ -12670,8 +12202,7 @@
 		     * // => [4, 1, 3, 2]
 		     */
 		    function shuffle(collection) {
-		      var func = isArray(collection) ? arrayShuffle : baseShuffle;
-		      return func(collection);
+		      return sampleSize(collection, MAX_ARRAY_LENGTH);
 		    }
 		
 		    /**
@@ -12682,7 +12213,7 @@
 		     * @memberOf _
 		     * @since 0.1.0
 		     * @category Collection
-		     * @param {Array|Object|string} collection The collection to inspect.
+		     * @param {Array|Object} collection The collection to inspect.
 		     * @returns {number} Returns the collection size.
 		     * @example
 		     *
@@ -12700,13 +12231,16 @@
 		        return 0;
 		      }
 		      if (isArrayLike(collection)) {
-		        return isString(collection) ? stringSize(collection) : collection.length;
+		        var result = collection.length;
+		        return (result && isString(collection)) ? stringSize(collection) : result;
 		      }
-		      var tag = getTag(collection);
-		      if (tag == mapTag || tag == setTag) {
-		        return collection.size;
+		      if (isObjectLike(collection)) {
+		        var tag = getTag(collection);
+		        if (tag == mapTag || tag == setTag) {
+		          return collection.size;
+		        }
 		      }
-		      return baseKeys(collection).length;
+		      return keys(collection).length;
 		    }
 		
 		    /**
@@ -12776,11 +12310,16 @@
 		     *   { 'user': 'barney', 'age': 34 }
 		     * ];
 		     *
-		     * _.sortBy(users, [function(o) { return o.user; }]);
+		     * _.sortBy(users, function(o) { return o.user; });
 		     * // => objects for [['barney', 36], ['barney', 34], ['fred', 48], ['fred', 40]]
 		     *
 		     * _.sortBy(users, ['user', 'age']);
 		     * // => objects for [['barney', 34], ['barney', 36], ['fred', 40], ['fred', 48]]
+		     *
+		     * _.sortBy(users, 'user', function(o) {
+		     *   return Math.floor(o.age / 10);
+		     * });
+		     * // => objects for [['barney', 36], ['barney', 34], ['fred', 48], ['fred', 40]]
 		     */
 		    var sortBy = baseRest(function(collection, iteratees) {
 		      if (collection == null) {
@@ -12813,9 +12352,9 @@
 		     * }, _.now());
 		     * // => Logs the number of milliseconds it took for the deferred invocation.
 		     */
-		    var now = ctxNow || function() {
-		      return root.Date.now();
-		    };
+		    function now() {
+		      return Date.now();
+		    }
 		
 		    /*------------------------------------------------------------------------*/
 		
@@ -13295,7 +12834,7 @@
 		     * _.defer(function(text) {
 		     *   console.log(text);
 		     * }, 'deferred');
-		     * // => Logs 'deferred' after one millisecond.
+		     * // => Logs 'deferred' after one or more milliseconds.
 		     */
 		    var defer = baseRest(function(func, args) {
 		      return baseDelay(func, 1, args);
@@ -13356,7 +12895,7 @@
 		     * **Note:** The cache is exposed as the `cache` property on the memoized
 		     * function. Its creation may be customized by replacing the `_.memoize.Cache`
 		     * constructor with one whose instances implement the
-		     * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+		     * [`Map`](http://ecma-international.org/ecma-262/6.0/#sec-properties-of-the-map-prototype-object)
 		     * method interface of `delete`, `get`, `has`, and `set`.
 		     *
 		     * @static
@@ -13403,14 +12942,14 @@
 		          return cache.get(key);
 		        }
 		        var result = func.apply(this, args);
-		        memoized.cache = cache.set(key, result) || cache;
+		        memoized.cache = cache.set(key, result);
 		        return result;
 		      };
 		      memoized.cache = new (memoize.Cache || MapCache);
 		      return memoized;
 		    }
 		
-		    // Expose `MapCache`.
+		    // Assign cache to `_.memoize`.
 		    memoize.Cache = MapCache;
 		
 		    /**
@@ -13502,7 +13041,7 @@
 		     * func(10, 5);
 		     * // => [100, 10]
 		     */
-		    var overArgs = castRest(function(func, transforms) {
+		    var overArgs = baseRest(function(func, transforms) {
 		      transforms = (transforms.length == 1 && isArray(transforms[0]))
 		        ? arrayMap(transforms[0], baseUnary(getIteratee()))
 		        : arrayMap(baseFlatten(transforms, 1), baseUnary(getIteratee()));
@@ -13616,8 +13155,8 @@
 		     * rearged('b', 'c', 'a')
 		     * // => ['a', 'b', 'c']
 		     */
-		    var rearg = flatRest(function(func, indexes) {
-		      return createWrap(func, REARG_FLAG, undefined, undefined, undefined, indexes);
+		    var rearg = baseRest(function(func, indexes) {
+		      return createWrap(func, REARG_FLAG, undefined, undefined, undefined, baseFlatten(indexes, 1));
 		    });
 		
 		    /**
@@ -13656,7 +13195,7 @@
 		    /**
 		     * Creates a function that invokes `func` with the `this` binding of the
 		     * create function and an array of arguments much like
-		     * [`Function#apply`](http://www.ecma-international.org/ecma-262/7.0/#sec-function.prototype.apply).
+		     * [`Function#apply`](http://www.ecma-international.org/ecma-262/6.0/#sec-function.prototype.apply).
 		     *
 		     * **Note:** This method is based on the
 		     * [spread operator](https://mdn.io/spread_operator).
@@ -14003,7 +13542,7 @@
 		
 		    /**
 		     * Performs a
-		     * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+		     * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
 		     * comparison between two values to determine if they are equivalent.
 		     *
 		     * @static
@@ -14107,10 +13646,11 @@
 		     * _.isArguments([1, 2, 3]);
 		     * // => false
 		     */
-		    var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsArguments : function(value) {
-		      return isObjectLike(value) && hasOwnProperty.call(value, 'callee') &&
-		        !propertyIsEnumerable.call(value, 'callee');
-		    };
+		    function isArguments(value) {
+		      // Safari 8.1 incorrectly makes `arguments.callee` enumerable in strict mode.
+		      return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
+		        (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
+		    }
 		
 		    /**
 		     * Checks if `value` is classified as an `Array` object.
@@ -14182,7 +13722,7 @@
 		     * // => false
 		     */
 		    function isArrayLike(value) {
-		      return value != null && isLength(value.length) && !isFunction(value);
+		      return value != null && isLength(getLength(value)) && !isFunction(value);
 		    }
 		
 		    /**
@@ -14282,7 +13822,8 @@
 		     * @since 0.1.0
 		     * @category Lang
 		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if `value` is a DOM element, else `false`.
+		     * @returns {boolean} Returns `true` if `value` is a DOM element,
+		     *  else `false`.
 		     * @example
 		     *
 		     * _.isElement(document.body);
@@ -14292,7 +13833,7 @@
 		     * // => false
 		     */
 		    function isElement(value) {
-		      return value != null && value.nodeType === 1 && isObjectLike(value) && !isPlainObject(value);
+		      return !!value && value.nodeType === 1 && isObjectLike(value) && !isPlainObject(value);
 		    }
 		
 		    /**
@@ -14330,23 +13871,22 @@
 		     */
 		    function isEmpty(value) {
 		      if (isArrayLike(value) &&
-		          (isArray(value) || typeof value == 'string' || typeof value.splice == 'function' ||
-		            isBuffer(value) || isTypedArray(value) || isArguments(value))) {
+		          (isArray(value) || isString(value) || isFunction(value.splice) ||
+		            isArguments(value) || isBuffer(value))) {
 		        return !value.length;
 		      }
-		      var tag = getTag(value);
-		      if (tag == mapTag || tag == setTag) {
-		        return !value.size;
-		      }
-		      if (isPrototype(value)) {
-		        return !baseKeys(value).length;
+		      if (isObjectLike(value)) {
+		        var tag = getTag(value);
+		        if (tag == mapTag || tag == setTag) {
+		          return !value.size;
+		        }
 		      }
 		      for (var key in value) {
 		        if (hasOwnProperty.call(value, key)) {
 		          return false;
 		        }
 		      }
-		      return true;
+		      return !(nonEnumShadows && keys(value).length);
 		    }
 		
 		    /**
@@ -14365,7 +13905,8 @@
 		     * @category Lang
 		     * @param {*} value The value to compare.
 		     * @param {*} other The other value to compare.
-		     * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+		     * @returns {boolean} Returns `true` if the values are equivalent,
+		     *  else `false`.
 		     * @example
 		     *
 		     * var object = { 'a': 1 };
@@ -14394,7 +13935,8 @@
 		     * @param {*} value The value to compare.
 		     * @param {*} other The other value to compare.
 		     * @param {Function} [customizer] The function to customize comparisons.
-		     * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+		     * @returns {boolean} Returns `true` if the values are equivalent,
+		     *  else `false`.
 		     * @example
 		     *
 		     * function isGreeting(value) {
@@ -14428,7 +13970,8 @@
 		     * @since 3.0.0
 		     * @category Lang
 		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if `value` is an error object, else `false`.
+		     * @returns {boolean} Returns `true` if `value` is an error object,
+		     *  else `false`.
 		     * @example
 		     *
 		     * _.isError(new Error);
@@ -14456,7 +13999,8 @@
 		     * @since 0.1.0
 		     * @category Lang
 		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if `value` is a finite number, else `false`.
+		     * @returns {boolean} Returns `true` if `value` is a finite number,
+		     *  else `false`.
 		     * @example
 		     *
 		     * _.isFinite(3);
@@ -14494,9 +14038,10 @@
 		     */
 		    function isFunction(value) {
 		      // The use of `Object#toString` avoids issues with the `typeof` operator
-		      // in Safari 9 which returns 'object' for typed array and other constructors.
+		      // in Safari 8 which returns 'object' for typed array and weak map constructors,
+		      // and PhantomJS 1.9 which returns 'function' for `NodeList` instances.
 		      var tag = isObject(value) ? objectToString.call(value) : '';
-		      return tag == funcTag || tag == genTag || tag == proxyTag;
+		      return tag == funcTag || tag == genTag;
 		    }
 		
 		    /**
@@ -14532,15 +14077,16 @@
 		    /**
 		     * Checks if `value` is a valid array-like length.
 		     *
-		     * **Note:** This method is loosely based on
-		     * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+		     * **Note:** This function is loosely based on
+		     * [`ToLength`](http://ecma-international.org/ecma-262/6.0/#sec-tolength).
 		     *
 		     * @static
 		     * @memberOf _
 		     * @since 4.0.0
 		     * @category Lang
 		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+		     * @returns {boolean} Returns `true` if `value` is a valid length,
+		     *  else `false`.
 		     * @example
 		     *
 		     * _.isLength(3);
@@ -14562,7 +14108,7 @@
 		
 		    /**
 		     * Checks if `value` is the
-		     * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+		     * [language type](http://www.ecma-international.org/ecma-262/6.0/#sec-ecmascript-language-types)
 		     * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
 		     *
 		     * @static
@@ -14587,7 +14133,7 @@
 		     */
 		    function isObject(value) {
 		      var type = typeof value;
-		      return value != null && (type == 'object' || type == 'function');
+		      return !!value && (type == 'object' || type == 'function');
 		    }
 		
 		    /**
@@ -14615,7 +14161,7 @@
 		     * // => false
 		     */
 		    function isObjectLike(value) {
-		      return value != null && typeof value == 'object';
+		      return !!value && typeof value == 'object';
 		    }
 		
 		    /**
@@ -14641,12 +14187,8 @@
 		     * Performs a partial deep comparison between `object` and `source` to
 		     * determine if `object` contains equivalent property values.
 		     *
-		     * **Note:** This method is equivalent to `_.matches` when `source` is
-		     * partially applied.
-		     *
-		     * Partial comparisons will match empty array and empty object `source`
-		     * values against any array or object value, respectively. See `_.isEqual`
-		     * for a list of supported value comparisons.
+		     * **Note:** This method supports comparing the same values as `_.isEqual`
+		     * and is equivalent to `_.matches` when `source` is partially applied.
 		     *
 		     * @static
 		     * @memberOf _
@@ -14769,7 +14311,7 @@
 		     */
 		    function isNative(value) {
 		      if (isMaskable(value)) {
-		        throw new Error(CORE_ERROR_TEXT);
+		        throw new Error('This method is not supported with core-js. Try https://github.com/es-shims.');
 		      }
 		      return baseIsNative(value);
 		    }
@@ -14859,7 +14401,8 @@
 		     * @since 0.8.0
 		     * @category Lang
 		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+		     * @returns {boolean} Returns `true` if `value` is a plain object,
+		     *  else `false`.
 		     * @example
 		     *
 		     * function Foo() {
@@ -14879,7 +14422,8 @@
 		     * // => true
 		     */
 		    function isPlainObject(value) {
-		      if (!isObjectLike(value) || objectToString.call(value) != objectTag) {
+		      if (!isObjectLike(value) ||
+		          objectToString.call(value) != objectTag || isHostObject(value)) {
 		        return false;
 		      }
 		      var proto = getPrototype(value);
@@ -14922,7 +14466,8 @@
 		     * @since 4.0.0
 		     * @category Lang
 		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if `value` is a safe integer, else `false`.
+		     * @returns {boolean} Returns `true` if `value` is a safe integer,
+		     *  else `false`.
 		     * @example
 		     *
 		     * _.isSafeInteger(3);
@@ -15216,7 +14761,7 @@
 		     * Converts `value` to an integer.
 		     *
 		     * **Note:** This method is loosely based on
-		     * [`ToInteger`](http://www.ecma-international.org/ecma-262/7.0/#sec-tointeger).
+		     * [`ToInteger`](http://www.ecma-international.org/ecma-262/6.0/#sec-tointeger).
 		     *
 		     * @static
 		     * @memberOf _
@@ -15250,7 +14795,7 @@
 		     * array-like object.
 		     *
 		     * **Note:** This method is based on
-		     * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+		     * [`ToLength`](http://ecma-international.org/ecma-262/6.0/#sec-tolength).
 		     *
 		     * @static
 		     * @memberOf _
@@ -15307,7 +14852,7 @@
 		        return NAN;
 		      }
 		      if (isObject(value)) {
-		        var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
+		        var other = isFunction(value.valueOf) ? value.valueOf() : value;
 		        value = isObject(other) ? (other + '') : other;
 		      }
 		      if (typeof value != 'string') {
@@ -15384,8 +14929,8 @@
 		     * @memberOf _
 		     * @since 4.0.0
 		     * @category Lang
-		     * @param {*} value The value to convert.
-		     * @returns {string} Returns the converted string.
+		     * @param {*} value The value to process.
+		     * @returns {string} Returns the string.
 		     * @example
 		     *
 		     * _.toString(null);
@@ -15436,7 +14981,7 @@
 		     * // => { 'a': 1, 'c': 3 }
 		     */
 		    var assign = createAssigner(function(object, source) {
-		      if (isPrototype(source) || isArrayLike(source)) {
+		      if (nonEnumShadows || isPrototype(source) || isArrayLike(source)) {
 		        copyObject(source, keys(source), object);
 		        return;
 		      }
@@ -15479,7 +15024,13 @@
 		     * // => { 'a': 1, 'b': 2, 'c': 3, 'd': 4 }
 		     */
 		    var assignIn = createAssigner(function(object, source) {
-		      copyObject(source, keysIn(source), object);
+		      if (nonEnumShadows || isPrototype(source) || isArrayLike(source)) {
+		        copyObject(source, keysIn(source), object);
+		        return;
+		      }
+		      for (var key in source) {
+		        assignValue(object, key, source[key]);
+		      }
 		    });
 		
 		    /**
@@ -15564,7 +15115,9 @@
 		     * _.at(object, ['a[0].b.c', 'a[1]']);
 		     * // => [3, 4]
 		     */
-		    var at = flatRest(baseAt);
+		    var at = baseRest(function(object, paths) {
+		      return baseAt(object, baseFlatten(paths, 1));
+		    });
 		
 		    /**
 		     * Creates an object that inherits from the `prototype` object. If a
@@ -15663,7 +15216,7 @@
 		     * @memberOf _
 		     * @since 1.1.0
 		     * @category Object
-		     * @param {Object} object The object to inspect.
+		     * @param {Object} object The object to search.
 		     * @param {Function} [predicate=_.identity] The function invoked per iteration.
 		     * @returns {string|undefined} Returns the key of the matched element,
 		     *  else `undefined`.
@@ -15702,7 +15255,7 @@
 		     * @memberOf _
 		     * @since 2.0.0
 		     * @category Object
-		     * @param {Object} object The object to inspect.
+		     * @param {Object} object The object to search.
 		     * @param {Function} [predicate=_.identity] The function invoked per iteration.
 		     * @returns {string|undefined} Returns the key of the matched element,
 		     *  else `undefined`.
@@ -16086,7 +15639,7 @@
 		     * Creates an array of the own enumerable property names of `object`.
 		     *
 		     * **Note:** Non-object values are coerced to objects. See the
-		     * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+		     * [ES spec](http://ecma-international.org/ecma-262/6.0/#sec-object.keys)
 		     * for more details.
 		     *
 		     * @static
@@ -16111,7 +15664,23 @@
 		     * // => ['0', '1']
 		     */
 		    function keys(object) {
-		      return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
+		      var isProto = isPrototype(object);
+		      if (!(isProto || isArrayLike(object))) {
+		        return baseKeys(object);
+		      }
+		      var indexes = indexKeys(object),
+		          skipIndexes = !!indexes,
+		          result = indexes || [],
+		          length = result.length;
+		
+		      for (var key in object) {
+		        if (baseHas(object, key) &&
+		            !(skipIndexes && (key == 'length' || isIndex(key, length))) &&
+		            !(isProto && key == 'constructor')) {
+		          result.push(key);
+		        }
+		      }
+		      return result;
 		    }
 		
 		    /**
@@ -16138,7 +15707,23 @@
 		     * // => ['a', 'b', 'c'] (iteration order is not guaranteed)
 		     */
 		    function keysIn(object) {
-		      return isArrayLike(object) ? arrayLikeKeys(object, true) : baseKeysIn(object);
+		      var index = -1,
+		          isProto = isPrototype(object),
+		          props = baseKeysIn(object),
+		          propsLength = props.length,
+		          indexes = indexKeys(object),
+		          skipIndexes = !!indexes,
+		          result = indexes || [],
+		          length = result.length;
+		
+		      while (++index < propsLength) {
+		        var key = props[index];
+		        if (!(skipIndexes && (key == 'length' || isIndex(key, length))) &&
+		            !(key == 'constructor' && (isProto || !hasOwnProperty.call(object, key)))) {
+		          result.push(key);
+		        }
+		      }
+		      return result;
 		    }
 		
 		    /**
@@ -16167,7 +15752,7 @@
 		      iteratee = getIteratee(iteratee, 3);
 		
 		      baseForOwn(object, function(value, key, object) {
-		        baseAssignValue(result, iteratee(value, key, object), value);
+		        result[iteratee(value, key, object)] = value;
 		      });
 		      return result;
 		    }
@@ -16205,7 +15790,7 @@
 		      iteratee = getIteratee(iteratee, 3);
 		
 		      baseForOwn(object, function(value, key, object) {
-		        baseAssignValue(result, key, iteratee(value, key, object));
+		        result[key] = iteratee(value, key, object);
 		      });
 		      return result;
 		    }
@@ -16249,7 +15834,7 @@
 		     * This method is like `_.merge` except that it accepts `customizer` which
 		     * is invoked to produce the merged values of the destination and source
 		     * properties. If `customizer` returns `undefined`, merging is handled by the
-		     * method instead. The `customizer` is invoked with six arguments:
+		     * method instead. The `customizer` is invoked with seven arguments:
 		     * (objValue, srcValue, key, object, source, stack).
 		     *
 		     * **Note:** This method mutates `object`.
@@ -16299,11 +15884,11 @@
 		     * _.omit(object, ['a', 'c']);
 		     * // => { 'b': '2' }
 		     */
-		    var omit = flatRest(function(object, props) {
+		    var omit = baseRest(function(object, props) {
 		      if (object == null) {
 		        return {};
 		      }
-		      props = arrayMap(props, toKey);
+		      props = arrayMap(baseFlatten(props, 1), toKey);
 		      return basePick(object, baseDifference(getAllKeysIn(object), props));
 		    });
 		
@@ -16348,8 +15933,8 @@
 		     * _.pick(object, ['a', 'c']);
 		     * // => { 'a': 1, 'c': 3 }
 		     */
-		    var pick = flatRest(function(object, props) {
-		      return object == null ? {} : basePick(object, arrayMap(props, toKey));
+		    var pick = baseRest(function(object, props) {
+		      return object == null ? {} : basePick(object, arrayMap(baseFlatten(props, 1), toKey));
 		    });
 		
 		    /**
@@ -16569,23 +16154,22 @@
 		     * // => { '1': ['a', 'c'], '2': ['b'] }
 		     */
 		    function transform(object, iteratee, accumulator) {
-		      var isArr = isArray(object),
-		          isArrLike = isArr || isBuffer(object) || isTypedArray(object);
-		
+		      var isArr = isArray(object) || isTypedArray(object);
 		      iteratee = getIteratee(iteratee, 4);
+		
 		      if (accumulator == null) {
-		        var Ctor = object && object.constructor;
-		        if (isArrLike) {
-		          accumulator = isArr ? new Ctor : [];
-		        }
-		        else if (isObject(object)) {
-		          accumulator = isFunction(Ctor) ? baseCreate(getPrototype(object)) : {};
-		        }
-		        else {
+		        if (isArr || isObject(object)) {
+		          var Ctor = object.constructor;
+		          if (isArr) {
+		            accumulator = isArray(object) ? new Ctor : [];
+		          } else {
+		            accumulator = isFunction(Ctor) ? baseCreate(getPrototype(object)) : {};
+		          }
+		        } else {
 		          accumulator = {};
 		        }
 		      }
-		      (isArrLike ? arrayEach : baseForOwn)(object, function(value, index, object) {
+		      (isArr ? arrayEach : baseForOwn)(object, function(value, index, object) {
 		        return iteratee(accumulator, value, index, object);
 		      });
 		      return accumulator;
@@ -16945,9 +16529,8 @@
 		
 		    /**
 		     * Deburrs `string` by converting
-		     * [Latin-1 Supplement](https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)#Character_table)
-		     * and [Latin Extended-A](https://en.wikipedia.org/wiki/Latin_Extended-A)
-		     * letters to basic Latin letters and removing
+		     * [latin-1 supplementary letters](https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)#Character_table)
+		     * to basic latin letters and removing
 		     * [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks).
 		     *
 		     * @static
@@ -16963,7 +16546,7 @@
 		     */
 		    function deburr(string) {
 		      string = toString(string);
-		      return string && string.replace(reLatin, deburrLetter).replace(reComboMark, '');
+		      return string && string.replace(reLatin1, deburrLetter).replace(reComboMark, '');
 		    }
 		
 		    /**
@@ -16973,7 +16556,7 @@
 		     * @memberOf _
 		     * @since 3.0.0
 		     * @category String
-		     * @param {string} [string=''] The string to inspect.
+		     * @param {string} [string=''] The string to search.
 		     * @param {string} [target] The string to search for.
 		     * @param {number} [position=string.length] The position to search up to.
 		     * @returns {boolean} Returns `true` if `string` ends with `target`,
@@ -17004,8 +16587,8 @@
 		    }
 		
 		    /**
-		     * Converts the characters "&", "<", ">", '"', and "'" in `string` to their
-		     * corresponding HTML entities.
+		     * Converts the characters "&", "<", ">", '"', "'", and "\`" in `string` to
+		     * their corresponding HTML entities.
 		     *
 		     * **Note:** No other characters are escaped. To escape additional
 		     * characters use a third-party library like [_he_](https://mths.be/he).
@@ -17015,6 +16598,12 @@
 		     * unless they're part of a tag or unquoted attribute value. See
 		     * [Mathias Bynens's article](https://mathiasbynens.be/notes/ambiguous-ampersands)
 		     * (under "semi-related fun fact") for more details.
+		     *
+		     * Backticks are escaped because in IE < 9, they can break out of
+		     * attribute values or HTML comments. See [#59](https://html5sec.org/#59),
+		     * [#102](https://html5sec.org/#102), [#108](https://html5sec.org/#108), and
+		     * [#133](https://html5sec.org/#133) of the
+		     * [HTML5 Security Cheatsheet](https://html5sec.org/) for more details.
 		     *
 		     * When working with HTML you should always
 		     * [quote attribute values](http://wonko.com/post/html-escaping) to reduce
@@ -17258,12 +16847,15 @@
 		     * // => [6, 8, 10]
 		     */
 		    function parseInt(string, radix, guard) {
+		      // Chrome fails to trim leading <BOM> whitespace characters.
+		      // See https://bugs.chromium.org/p/v8/issues/detail?id=3109 for more details.
 		      if (guard || radix == null) {
 		        radix = 0;
 		      } else if (radix) {
 		        radix = +radix;
 		      }
-		      return nativeParseInt(toString(string).replace(reTrimStart, ''), radix || 0);
+		      string = toString(string).replace(reTrim, '');
+		      return nativeParseInt(string, radix || (reHasHexPrefix.test(string) ? 16 : 10));
 		    }
 		
 		    /**
@@ -17320,7 +16912,7 @@
 		      var args = arguments,
 		          string = toString(args[0]);
 		
-		      return args.length < 3 ? string : string.replace(args[1], args[2]);
+		      return args.length < 3 ? string : nativeReplace.call(string, args[1], args[2]);
 		    }
 		
 		    /**
@@ -17381,11 +16973,11 @@
 		            (separator != null && !isRegExp(separator))
 		          )) {
 		        separator = baseToString(separator);
-		        if (!separator && hasUnicode(string)) {
+		        if (separator == '' && reHasComplexSymbol.test(string)) {
 		          return castSlice(stringToArray(string), 0, limit);
 		        }
 		      }
-		      return string.split(separator, limit);
+		      return nativeSplit.call(string, separator, limit);
 		    }
 		
 		    /**
@@ -17420,7 +17012,7 @@
 		     * @memberOf _
 		     * @since 3.0.0
 		     * @category String
-		     * @param {string} [string=''] The string to inspect.
+		     * @param {string} [string=''] The string to search.
 		     * @param {string} [target] The string to search for.
 		     * @param {number} [position=0] The position to search from.
 		     * @returns {boolean} Returns `true` if `string` starts with `target`,
@@ -17502,8 +17094,7 @@
 		     * compiled({ 'user': 'barney' });
 		     * // => 'hello barney!'
 		     *
-		     * // Use the ES template literal delimiter as an "interpolate" delimiter.
-		     * // Disable support by replacing the "interpolate" delimiter.
+		     * // Use the ES delimiter as an alternative to the default "interpolate" delimiter.
 		     * var compiled = _.template('hello ${ user }!');
 		     * compiled({ 'user': 'pebbles' });
 		     * // => 'hello pebbles!'
@@ -17858,7 +17449,7 @@
 		      string = toString(string);
 		
 		      var strLength = string.length;
-		      if (hasUnicode(string)) {
+		      if (reHasComplexSymbol.test(string)) {
 		        var strSymbols = stringToArray(string);
 		        strLength = strSymbols.length;
 		      }
@@ -17904,7 +17495,7 @@
 		
 		    /**
 		     * The inverse of `_.escape`; this method converts the HTML entities
-		     * `&amp;`, `&lt;`, `&gt;`, `&quot;`, and `&#39;` in `string` to
+		     * `&amp;`, `&lt;`, `&gt;`, `&quot;`, `&#39;`, and `&#96;` in `string` to
 		     * their corresponding characters.
 		     *
 		     * **Note:** No other HTML entities are unescaped. To unescape additional
@@ -17995,7 +17586,7 @@
 		      pattern = guard ? undefined : pattern;
 		
 		      if (pattern === undefined) {
-		        return hasUnicodeWord(string) ? unicodeWords(string) : asciiWords(string);
+		        pattern = reHasComplexWord.test(string) ? reComplexWord : reBasicWord;
 		      }
 		      return string.match(pattern) || [];
 		    }
@@ -18058,10 +17649,10 @@
 		     * jQuery(element).on('click', view.click);
 		     * // => Logs 'clicked docs' when clicked.
 		     */
-		    var bindAll = flatRest(function(object, methodNames) {
-		      arrayEach(methodNames, function(key) {
+		    var bindAll = baseRest(function(object, methodNames) {
+		      arrayEach(baseFlatten(methodNames, 1), function(key) {
 		        key = toKey(key);
-		        baseAssignValue(object, key, bind(object[key], object));
+		        object[key] = bind(object[key], object);
 		      });
 		      return object;
 		    });
@@ -18312,12 +17903,8 @@
 		     * object and `source`, returning `true` if the given object has equivalent
 		     * property values, else `false`.
 		     *
-		     * **Note:** The created function is equivalent to `_.isMatch` with `source`
-		     * partially applied.
-		     *
-		     * Partial comparisons will match empty array and empty object `source`
-		     * values against any array or object value, respectively. See `_.isEqual`
-		     * for a list of supported value comparisons.
+		     * **Note:** The created function supports comparing the same values as
+		     * `_.isEqual` is equivalent to `_.isMatch` with `source` partially applied.
 		     *
 		     * @static
 		     * @memberOf _
@@ -18344,9 +17931,7 @@
 		     * value at `path` of a given object to `srcValue`, returning `true` if the
 		     * object value is equivalent, else `false`.
 		     *
-		     * **Note:** Partial comparisons will match empty array and empty object
-		     * `srcValue` values against any array or object value, respectively. See
-		     * `_.isEqual` for a list of supported value comparisons.
+		     * **Note:** This method supports comparing the same values as `_.isEqual`.
 		     *
 		     * @static
 		     * @memberOf _
@@ -19852,7 +19437,7 @@
 		      lodash.prototype[iteratorSymbol] = wrapperToIterator;
 		    }
 		    return lodash;
-		  });
+		  }
 		
 		  /*--------------------------------------------------------------------------*/
 		
@@ -28607,8 +28192,9 @@
 		var map = {
 			"./brightcove.js": 42,
 			"./dailymotion.js": 43,
-			"./html.js": 44,
-			"./youtube.js": 45
+			"./html.js": 45,
+			"./theoplayer.js": 46,
+			"./youtube.js": 47
 		};
 		function webpackContext(req) {
 			return __webpack_require__(webpackContextResolve(req));
@@ -28907,6 +28493,24 @@
 		    }
 		
 		    return {
+		        getDuration: function(id) {
+		            var dfd = Q.defer();
+		            var nanoajax = __webpack_require__(44);
+		
+		
+		            nanoajax.ajax({
+		                url: 'https://api.dailymotion.com/video/' + id + '?fields=id,duration'
+		            }, function (code, responseText) {
+		                try {
+		                    var duration = ~~JSON.parse(responseText);
+		                    dfd.resolve(duration);
+		                } catch (e) {
+		                    dfd.resolve(-1);
+		                }
+		            });
+		
+		            return dfd.promise;
+		        },
 		        createPlayer: function(elem, params) {
 		            console.debug('Player params', params);
 		
@@ -29101,6 +28705,122 @@
 	
 	/***/ },
 	/* 44 */
+	/***/ function(module, exports) {
+	
+		/* WEBPACK VAR INJECTION */(function(global) {// Best place to find information on XHR features is:
+		// https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest
+		
+		var reqfields = [
+		  'responseType', 'withCredentials', 'timeout', 'onprogress'
+		]
+		
+		// Simple and small ajax function
+		// Takes a parameters object and a callback function
+		// Parameters:
+		//  - url: string, required
+		//  - headers: object of `{header_name: header_value, ...}`
+		//  - body:
+		//      + string (sets content type to 'application/x-www-form-urlencoded' if not set in headers)
+		//      + FormData (doesn't set content type so that browser will set as appropriate)
+		//  - method: 'GET', 'POST', etc. Defaults to 'GET' or 'POST' based on body
+		//  - cors: If your using cross-origin, you will need this true for IE8-9
+		//
+		// The following parameters are passed onto the xhr object.
+		// IMPORTANT NOTE: The caller is responsible for compatibility checking.
+		//  - responseType: string, various compatability, see xhr docs for enum options
+		//  - withCredentials: boolean, IE10+, CORS only
+		//  - timeout: long, ms timeout, IE8+
+		//  - onprogress: callback, IE10+
+		//
+		// Callback function prototype:
+		//  - statusCode from request
+		//  - response
+		//    + if responseType set and supported by browser, this is an object of some type (see docs)
+		//    + otherwise if request completed, this is the string text of the response
+		//    + if request is aborted, this is "Abort"
+		//    + if request times out, this is "Timeout"
+		//    + if request errors before completing (probably a CORS issue), this is "Error"
+		//  - request object
+		//
+		// Returns the request object. So you can call .abort() or other methods
+		//
+		// DEPRECATIONS:
+		//  - Passing a string instead of the params object has been removed!
+		//
+		exports.ajax = function (params, callback) {
+		  // Any variable used more than once is var'd here because
+		  // minification will munge the variables whereas it can't munge
+		  // the object access.
+		  var headers = params.headers || {}
+		    , body = params.body
+		    , method = params.method || (body ? 'POST' : 'GET')
+		    , called = false
+		
+		  var req = getRequest(params.cors)
+		
+		  function cb(statusCode, responseText) {
+		    return function () {
+		      if (!called) {
+		        callback(req.status === undefined ? statusCode : req.status,
+		                 req.status === 0 ? "Error" : (req.response || req.responseText || responseText),
+		                 req)
+		        called = true
+		      }
+		    }
+		  }
+		
+		  req.open(method, params.url, true)
+		
+		  var success = req.onload = cb(200)
+		  req.onreadystatechange = function () {
+		    if (req.readyState === 4) success()
+		  }
+		  req.onerror = cb(null, 'Error')
+		  req.ontimeout = cb(null, 'Timeout')
+		  req.onabort = cb(null, 'Abort')
+		
+		  if (body) {
+		    setDefault(headers, 'X-Requested-With', 'XMLHttpRequest')
+		
+		    if (!global.FormData || !(body instanceof global.FormData)) {
+		      setDefault(headers, 'Content-Type', 'application/x-www-form-urlencoded')
+		    }
+		  }
+		
+		  for (var i = 0, len = reqfields.length, field; i < len; i++) {
+		    field = reqfields[i]
+		    if (params[field] !== undefined)
+		      req[field] = params[field]
+		  }
+		
+		  for (var field in headers)
+		    req.setRequestHeader(field, headers[field])
+		
+		  req.send(body)
+		
+		  return req
+		}
+		
+		function getRequest(cors) {
+		  // XDomainRequest is only way to do CORS in IE 8 and 9
+		  // But XDomainRequest isn't standards-compatible
+		  // Notably, it doesn't allow cookies to be sent or set by servers
+		  // IE 10+ is standards-compatible in its XMLHttpRequest
+		  // but IE 10 can still have an XDomainRequest object, so we don't want to use it
+		  if (cors && global.XDomainRequest && !/MSIE 1/.test(navigator.userAgent))
+		    return new XDomainRequest
+		  if (global.XMLHttpRequest)
+		    return new XMLHttpRequest
+		}
+		
+		function setDefault(obj, key, value) {
+		  obj[key] = obj[key] || value
+		}
+		
+		/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+	
+	/***/ },
+	/* 45 */
 	/***/ function(module, exports, __webpack_require__) {
 	
 		/**
@@ -29120,7 +28840,7 @@
 		        this.is_buffering = true;
 		
 		        this.curr_video = {
-		            api: 'youtube',
+		            api: 'html',
 		            id: id
 		        };
 		
@@ -29183,7 +28903,7 @@
 		        var video = document.createElement('video');
 		
 		        elem.appendChild(video);
-		        
+		
 		        if (params.width)
 		            video.style.width = params.width || '100%';
 		
@@ -29324,7 +29044,9 @@
 		            //------------Methods----------------
 		            this.loadVideoById = function(src, startSeconds) {
 		                //this.elem.autoplay = true;
-		                video.src = src;
+		                if (!video.src)
+		                    video.src = src;
+		
 		                video.play();
 		                if (startSeconds) {
 		                    video.currentTime = startSeconds;
@@ -29364,8 +29086,11 @@
 		                return 1;
 		            };
 		            this.destroy = function() {
+		                events = [];
+		                error_events = [];
 		                elem.removeChild(video);
 		                elem.style.display = 'none';
+		                video = null;
 		                //player = null;
 		            };
 		            
@@ -29385,13 +29110,29 @@
 		                    error_events.push(listener);
 		            };
 		            
-		            
+		
 		        };
 		        
 		        return new Player(video);
 		    }
 		
 		    return {
+		        getDuration: function(id) {
+		            var dfd = Q.defer();
+		            var video = document.createElement('video');
+		            video.src = id;
+		            //video.autoplay = true;
+		            video.ondurationchange = function() {
+		                dfd.resolve(20 * 60);
+		                //dfd.resolve(video.duration);
+		                document.body.removeChild(video);
+		                video = null;
+		            };
+		
+		            document.body.appendChild(video);
+		
+		            return dfd.promise;
+		        },
 		        createPlayer: function(elem, params) {
 		            var player_dfd = Q.defer();
 		
@@ -29443,7 +29184,361 @@
 		})();
 	
 	/***/ },
-	/* 45 */
+	/* 46 */
+	/***/ function(module, exports, __webpack_require__) {
+	
+		/**
+		 * Created by alex on 2/15/2016.
+		 */
+		
+		var Q = __webpack_require__(2);
+		var _ = __webpack_require__(5);
+		
+		module.exports = (function() {
+		
+		
+		
+		    function bufferVideoById(id, startSeconds) {
+		        var dfd = Q.defer();
+		
+		        this.is_buffering = true;
+		
+		        this.curr_video = {
+		            api: 'html',
+		            id: id
+		        };
+		
+		        this.elem.style.display = 'none';
+		        this.mute();
+		        this.loadVideoById(id, startSeconds);
+		        //this.setPlaybackQuality('highres');
+		        this.buffer_timer = setTimeout(function() {
+		            this.is_buffering = false;
+		            this.pauseVideo();
+		            dfd.resolve();
+		        }.bind(this), 1000);
+		
+		        return dfd.promise;
+		    }
+		
+		    function playVideoById(id, startSeconds) {
+		        clearTimeout(this.buffer_timer);
+		        this.elem.style.display = 'block';
+		        //this.setPlaybackQuality('highres');
+		        this.loadVideoById(id, startSeconds);
+		    }
+		
+		
+		    function continuePlay() {
+		        //this.unMute();
+		        this.playVideo();
+		        this.elem.style.display = 'block';
+		    }
+		
+		    function whenVideoEnd() {
+		        return this.play_stop_dfd.promise;
+		    }
+		
+		    function whenStartPlaying() {
+		        if (this.play_back_dfd)
+		            this.play_back_dfd.reject();
+		
+		        this.play_back_dfd = Q.defer();
+		
+		        return this.play_back_dfd.promise;
+		    }
+		
+		    function isPlaying() {
+		        return this.getPlayerState() == 1;
+		    }
+		
+		    function isPaused() {
+		        return this.getPlayerState() == 2;
+		    }
+		
+		    function emulateEvent(event) {
+		        if (event == 0)
+		            try {
+		                this.play_stop_dfd.resolve();
+		            } catch (e) {}
+		    }
+		
+		    function createPlayer(elem, params) {
+		        var video = document.createElement('video');
+		
+		        elem.appendChild(video);
+		
+		        if (params.width)
+		            video.style.width = params.width || '100%';
+		
+		        if (params.height)
+		            video.style.height = params.height || '100%';
+		
+		        video.controls = false;
+		        if (params.controls)
+		            video.controls = params.controls;
+		
+		        var Player = function(video) {
+		            this.elem = elem;
+		
+		            var buffering = false,
+		                playing = false;
+		
+		            var events = [],
+		                error_events = [];
+		
+		            var map_events = {
+		                end: 0,
+		                playing: 1,
+		                pause: 2,
+		                buffering: 3
+		            };
+		
+		            function execEvent(events, event_name) {
+		                var by_types = _.groupBy(events, 'type');
+		                (by_types[event_name] || []).forEach(function(event) {
+		                    if ('function' == typeof event.listener)
+		                        event.listener({
+		                            data: map_events[event_name]
+		                        });
+		                });
+		            }
+		
+		            //Fires when the loading of an audio/video is aborted
+		            video.onabort = function() {
+		                buffering = false;
+		                playing = false;
+		                execEvent(events, 'end');
+		            };
+		
+		            //Fires when the browser can start playing the audio/video
+		            video.oncanplay = function() {};
+		
+		            //Fires when the browser can play through the audio/video without stopping for buffering
+		            video.oncanplaythrough = function() {};
+		
+		            //Fires when the duration of the audio/video is changed
+		            video.ondurationchange = function() {};
+		
+		            //Fires when the current playlist is empty
+		            video.onemptied = function() {};
+		
+		            //Fires when the current playlist is ended
+		            video.onended = function() {
+		                buffering = false;
+		                playing = false;
+		                execEvent(events, 'end');
+		            };
+		
+		            //Fires when an error occurred during the loading of an audio/video
+		            video.onerror = function() {};
+		
+		            //Fires when the browser has loaded the current frame of the audio/video
+		            video.onloadeddata = function() {};
+		
+		            //Fires when the browser has loaded meta data for the audio/video
+		            video.onloadedmetadata = function() {};
+		
+		            //Fires when the browser starts looking for the audio/video
+		            video.onloadstart = function() {};
+		
+		            //Fires when the audio/video has been paused
+		            video.onpause = function() {
+		                buffering = false;
+		                playing = false;
+		                execEvent(events, 'pause');
+		            };
+		
+		            //Fires when the audio/video has been started or is no longer paused
+		            video.onplay = function() {
+		                buffering = false;
+		                playing = true;
+		                execEvent(events, 'playing');
+		            };
+		
+		            //Fires when the audio/video is playing after having been paused or stopped for buffering
+		            video.onplaying = function() {
+		                buffering = false;
+		                playing = true;
+		                execEvent(events, 'playing');
+		            };
+		
+		            //Fires when the browser is downloading the audio/video
+		            video.onprogress = function() {
+		                console.log('[html video tag event]', 'progress');
+		                buffering = true;
+		                playing = false;
+		            };
+		
+		            //Fires when the playing speed of the audio/video is changed
+		            video.onratechange = function() {};
+		
+		            //Fires when the user is finished moving/skipping to a new position in the audio/video
+		            video.onseeked = function() {};
+		
+		            //Fires when the user starts moving/skipping to a new position in the audio/video
+		            video.onseeking = function() {};
+		
+		            //Fires when the browser is trying to get media data, but data is not available
+		            video.onstalled = function() {
+		                console.log('[html video tag event]', 'stalled');
+		                /*                buffering = false;
+		                 playing = false;
+		                 execEvent(events, 'end');*/
+		            };
+		
+		            //Fires when the browser is intentionally not getting media data
+		            video.onsuspend = function() {
+		                console.log('[html video tag event]', 'suspend');
+		            };
+		
+		            //Fires when the current playback position has changed
+		            video.ontimeupdate = function() {};
+		
+		            //Fires when the volume has been changed
+		            video.onvolumechange = function() {};
+		
+		            //Fires when the video stops because it needs to buffer the next frame
+		            video.waiting = function() {
+		                console.log('[html video tag event]', 'waiting');
+		                //execEvent(events, 'buffering');
+		            };
+		
+		
+		            //------------Methods----------------
+		            this.loadVideoById = function(src, startSeconds) {
+		                //this.elem.autoplay = true;
+		                video.src = src;
+		                video.play();
+		                if (startSeconds) {
+		                    video.currentTime = startSeconds;
+		                }
+		            };
+		
+		            this.playVideo = function() {
+		                video.play();
+		            };
+		            this.pauseVideo = function() {
+		                video.pause();
+		            };
+		            this.seekTo = function(sec) {
+		                video.currentTime = sec;
+		            };
+		            this.mute = function() {
+		                video.muted = true;
+		            };
+		            this.unMute = function() {
+		                video.muted = false;
+		            };
+		            this.setVolume = function(volume) {
+		                video.volume = volume / 100;
+		            };
+		            this.getDuration = function() {
+		                return video.duration;
+		            };
+		            this.getCurrentTime = function() {
+		                return video.currentTime;
+		            };
+		            this.getPlayerState = function() {
+		                if (video.paused)
+		                    return 2;
+		                if (video.ended)
+		                    return 0;
+		
+		                return 1;
+		            };
+		            this.destroy = function() {
+		                elem.removeChild(video);
+		                elem.style.display = 'none';
+		                //player = null;
+		            };
+		
+		            this.addEventListener = function(event, listener) {
+		                if (event == 'onStateChange') {
+		                    events = events.concat([{
+		                        type: 'end',
+		                        listener: listener
+		                    },{
+		                        type: 'pause',
+		                        listener: listener
+		                    },{
+		                        type: 'playing',
+		                        listener: listener
+		                    }]);
+		                } else if (event == 'onError')
+		                    error_events.push(listener);
+		            };
+		
+		
+		        };
+		
+		        return new Player(theoplayer(video));
+		    }
+		
+		
+		    var dfd = Q.defer();
+		
+		    function isAPIReady(api_key) {
+		        window.theoplayer = {
+		
+		        };
+		
+		        // 2. This code loads the IFrame Player API code asynchronously.
+		        var tag = document.createElement('script');
+		
+		        tag.src = "https://cdn.theoplayer.com/latest/" + api_key + "/theoplayer.loader.js";
+		        var firstScriptTag = document.getElementsByTagName('script')[0];
+		        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+		
+		        window.theoplayer.onReady = function() {
+		            dfd.resolve();
+		        };
+		        return dfd.promise;
+		    }
+		
+		
+		    return {
+		        createPlayer: function(elem, params) {
+		
+		            return isAPIReady(params && params.theoplayer && params.theoplayer.api_key)
+		                .then(function() {
+		                    var player_dfd = Q.defer();
+		
+		                    var player = createPlayer(elem, params);
+		
+		                    player.play_stop_dfd = Q.defer();
+		                    player.bufferVideoById = bufferVideoById.bind(player);
+		                    player.playVideoById = playVideoById.bind(player);
+		                    player.continuePlay = continuePlay.bind(player);
+		                    player.whenVideoEnd = whenVideoEnd.bind(player);
+		                    player.whenStartPlaying = whenStartPlaying.bind(player);
+		                    player.isPlaying = isPlaying.bind(player);
+		                    player.isPaused = isPaused.bind(player);
+		
+		                    player.emulateEvent = emulateEvent.bind(player);
+		
+		                    player_dfd.resolve(player);
+		
+		
+		                    player.addEventListener('onStateChange', function(e) {
+		                        if (0 == e.data)
+		                            this.play_stop_dfd.resolve();
+		                        else if (1 == e.data) {
+		                            //TODO don't fire while buffering by bufferVideoById func
+		                            if (this.play_back_dfd && !this.is_buffering)
+		                                this.play_back_dfd.resolve(this.curr_video);
+		                        }
+		                    }.bind(player));
+		
+		
+		                    return player_dfd.promise;
+		                });
+		        }
+		    };
+		})();
+	
+	/***/ },
+	/* 47 */
 	/***/ function(module, exports, __webpack_require__) {
 	
 		/**

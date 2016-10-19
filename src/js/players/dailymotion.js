@@ -92,6 +92,24 @@ module.exports = (function() {
     }
 
     return {
+        getDuration: function(id) {
+            var dfd = Q.defer();
+            var nanoajax = require('../../vendor/nanoajax');
+
+
+            nanoajax.ajax({
+                url: 'https://api.dailymotion.com/video/' + id + '?fields=id,duration'
+            }, function (code, responseText) {
+                try {
+                    var duration = ~~JSON.parse(responseText);
+                    dfd.resolve(duration);
+                } catch (e) {
+                    dfd.resolve(-1);
+                }
+            });
+
+            return dfd.promise;
+        },
         createPlayer: function(elem, params) {
             console.debug('Player params', params);
 

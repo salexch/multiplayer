@@ -384,6 +384,14 @@ module.exports = (function() {
         this._anim.hide();
     };
 
+    player.prototype.fetchDuration = function(api, id) {
+        try {
+            return require('./players/' + api + '.js').getDuration(id);
+        } catch (e) {
+            return Q(-1);
+        }
+    };
+
     return {
         debug: function(is_debug) {
             debug = is_debug;

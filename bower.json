@@ -17,5 +17,6 @@
     "tests"
   ],
   "dependencies": {
+    "nanoajax": "^0.4.3"
   }
 }
