@@ -61,7 +61,7 @@ module.exports = (function() {
         bc(this._videoElem);
 
         //bc is async!
-        setTimeout(function() {
+        this.buffer_timer = setTimeout(function() {
             this.player = videojs(this._videoElem).ready(function(){
                 dfd.resolve();
             });
@@ -71,6 +71,8 @@ module.exports = (function() {
     }
 
     function playVideoById(id) {
+        clearTimeout(this.buffer_timer);
+
         this._videoElem.style.display = 'block';
         this._videoElem.setAttribute('data-video-id', id);
 

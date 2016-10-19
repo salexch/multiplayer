@@ -44,7 +44,7 @@ module.exports = (function() {
         this.buffer_timer = setTimeout(function() {
             this.pauseVideo();
             dfd.resolve();
-        }.bind(this), 0.5);
+        }.bind(this), 1000);
 
         return dfd.promise;
     }
@@ -178,11 +178,11 @@ module.exports = (function() {
                     player.loadVideoById = function(id, startSeconds) {
                         player.load(id, {
                             autoplay: true,
-                            start: startSeconds || 0
+                            start: ~~(startSeconds || 0)
                         });
 
                         if (startSeconds) {
-                            this._video_start = startSeconds;
+                            this._video_start = ~~startSeconds;
                         }
                     };
                     player.playVideo = player.play;

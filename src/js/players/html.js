@@ -9,7 +9,7 @@ module.exports = (function() {
 
 
 
-    function bufferVideoById(id, seconds) {
+    function bufferVideoById(id, startSeconds) {
         var dfd = Q.defer();
 
         this.is_buffering = true;
@@ -21,21 +21,22 @@ module.exports = (function() {
 
         this.elem.style.display = 'none';
         this.mute();
-        this.loadVideoById(id);
+        this.loadVideoById(id, startSeconds);
         //this.setPlaybackQuality('highres');
-        setTimeout(function() {
+        this.buffer_timer = setTimeout(function() {
             this.is_buffering = false;
             this.pauseVideo();
             dfd.resolve();
-        }.bind(this), seconds || 0.3);
+        }.bind(this), 1000);
 
         return dfd.promise;
     }
 
-    function playVideoById(id) {
+    function playVideoById(id, startSeconds) {
+        clearTimeout(this.buffer_timer);
         this.elem.style.display = 'block';
         //this.setPlaybackQuality('highres');
-        this.loadVideoById(id);
+        this.loadVideoById(id, startSeconds);
     }
 
 
@@ -216,11 +217,15 @@ module.exports = (function() {
 
 
             //------------Methods----------------
-            this.loadVideoById = function(src) {
+            this.loadVideoById = function(src, startSeconds) {
                 //this.elem.autoplay = true;
                 video.src = src;
                 video.play();
+                if (startSeconds) {
+                    video.currentTime = startSeconds;
+                }
             };
+
             this.playVideo = function() {
                 video.play();
             };

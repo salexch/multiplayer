@@ -28568,7 +28568,7 @@
 	        bc(this._videoElem);
 	
 	        //bc is async!
-	        setTimeout(function() {
+	        this.buffer_timer = setTimeout(function() {
 	            this.player = videojs(this._videoElem).ready(function(){
 	                dfd.resolve();
 	            });
@@ -28578,6 +28578,8 @@
 	    }
 	
 	    function playVideoById(id) {
+	        clearTimeout(this.buffer_timer);
+	
 	        this._videoElem.style.display = 'block';
 	        this._videoElem.setAttribute('data-video-id', id);
 	
@@ -28734,7 +28736,7 @@
 	        this.buffer_timer = setTimeout(function() {
 	            this.pauseVideo();
 	            dfd.resolve();
-	        }.bind(this), 0.5);
+	        }.bind(this), 1000);
 	
 	        return dfd.promise;
 	    }
@@ -28868,11 +28870,11 @@
 	                    player.loadVideoById = function(id, startSeconds) {
 	                        player.load(id, {
 	                            autoplay: true,
-	                            start: startSeconds || 0
+	                            start: ~~(startSeconds || 0)
 	                        });
 	
 	                        if (startSeconds) {
-	                            this._video_start = startSeconds;
+	                            this._video_start = ~~startSeconds;
 	                        }
 	                    };
 	                    player.playVideo = player.play;
@@ -28989,7 +28991,7 @@
 	
 	
 	
-	    function bufferVideoById(id, seconds) {
+	    function bufferVideoById(id, startSeconds) {
 	        var dfd = Q.defer();
 	
 	        this.is_buffering = true;
@@ -29001,21 +29003,22 @@
 	
 	        this.elem.style.display = 'none';
 	        this.mute();
-	        this.loadVideoById(id);
+	        this.loadVideoById(id, startSeconds);
 	        //this.setPlaybackQuality('highres');
-	        setTimeout(function() {
+	        this.buffer_timer = setTimeout(function() {
 	            this.is_buffering = false;
 	            this.pauseVideo();
 	            dfd.resolve();
-	        }.bind(this), seconds || 0.3);
+	        }.bind(this), 1000);
 	
 	        return dfd.promise;
 	    }
 	
-	    function playVideoById(id) {
+	    function playVideoById(id, startSeconds) {
+	        clearTimeout(this.buffer_timer);
 	        this.elem.style.display = 'block';
 	        //this.setPlaybackQuality('highres');
-	        this.loadVideoById(id);
+	        this.loadVideoById(id, startSeconds);
 	    }
 	
 	
@@ -29196,11 +29199,15 @@
 	
 	
 	            //------------Methods----------------
-	            this.loadVideoById = function(src) {
+	            this.loadVideoById = function(src, startSeconds) {
 	                //this.elem.autoplay = true;
 	                video.src = src;
 	                video.play();
+	                if (startSeconds) {
+	                    video.currentTime = startSeconds;
+	                }
 	            };
+	
 	            this.playVideo = function() {
 	                video.play();
 	            };
@@ -29367,7 +29374,7 @@
 	        this.mute();
 	        this.loadVideoById(id, startSeconds || 0);
 	        //this.setPlaybackQuality('highres');
-	        setTimeout(function() {
+	        this.buffer_timer = setTimeout(function() {
 	            this.is_buffering = false;
 	            this.pauseVideo();
 	            dfd.resolve();
@@ -29377,6 +29384,7 @@
 	    }
 	
 	    function playVideoById(id, startSeconds, endSeconds) {
+	        clearTimeout(this.buffer_timer);
 	        this.getIframe().style.display = 'block';
 	        //this.setPlaybackQuality('highres');
 	        var params = {
