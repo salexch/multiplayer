@@ -150,7 +150,9 @@ module.exports = (function() {
             };
 
             //Fires when an error occurred during the loading of an audio/video
-            video.onerror = function() {};
+            video.onerror = function() {
+                console.log('[html video tag event]', 'error', e);
+            };
 
             //Fires when the browser has loaded the current frame of the audio/video
             video.onloadeddata = function() {};
