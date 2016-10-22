@@ -60,7 +60,10 @@
         list: [{
             id: "http://techslides.com/demos/sample-videos/small.webm",
             api: 'html'
-        },{
+        }, /*{
+            id: 'http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_720p_stereo.ogg',
+            api: 'html'
+        },*/{
             id: "https://permadi.com/thirdParty/videos/redcliff450.webm",
             api: 'html'
         }]
@@ -73,6 +76,13 @@
             api: 'html'
         }]
 */
+    });
+
+    player.addEventListener('onStateChange', function(e) {
+        console.log('onStateChange', e);
+    });
+    player.addEventListener('onError', function(e) {
+        console.log('onError', e);
     });
 
     window.videoplayer = player;

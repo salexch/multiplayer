@@ -10,7 +10,7 @@ module.exports = (function() {
 
 
     function bufferVideoById(id, startSeconds) {
-        var dfd = Q.defer();
+        this._buffer_dfd = Q.defer();
 
         this.is_buffering = true;
 
@@ -25,11 +25,11 @@ module.exports = (function() {
         //this.setPlaybackQuality('highres');
         this.buffer_timer = setTimeout(function() {
             this.is_buffering = false;
-            this.pauseVideo();
-            dfd.resolve();
-        }.bind(this), 1000);
+            //this.pauseVideo();
+            this._buffer_dfd.resolve();
+        }.bind(this), 30 * 1000);
 
-        return dfd.promise;
+        return this._buffer_dfd.promise;
     }
 
     function playVideoById(id, startSeconds) {
@@ -105,21 +105,28 @@ module.exports = (function() {
                 buffering: 3
             };
 
+            var that = this;
+
             function execEvent(events, event_name) {
                 var by_types = _.groupBy(events, 'type');
                 (by_types[event_name] || []).forEach(function(event) {
-                    if ('function' == typeof event.listener)
-                        event.listener({
+                    if ('function' == typeof event.listener) {
+                        event.listener(_.assignWith({}, that.curr_video, {
                             data: map_events[event_name]
-                        });
+                        }));
+                    }
                 });
             }
 
             //Fires when the loading of an audio/video is aborted
             video.onabort = function() {
+                if (that._stopping)
+                    return false;
+
                 buffering = false;
                 playing = false;
                 execEvent(events, 'end');
+                this.play_stop_dfd.resolve();
             };
 
             //Fires when the browser can start playing the audio/video
@@ -139,6 +146,7 @@ module.exports = (function() {
                 buffering = false;
                 playing = false;
                 execEvent(events, 'end');
+                that.play_stop_dfd.resolve();
             };
 
             //Fires when an error occurred during the loading of an audio/video
@@ -155,6 +163,9 @@ module.exports = (function() {
 
             //Fires when the audio/video has been paused
             video.onpause = function() {
+                if (that._stopping)
+                    return false;
+
                 buffering = false;
                 playing = false;
                 execEvent(events, 'pause');
@@ -164,14 +175,34 @@ module.exports = (function() {
             video.onplay = function() {
                 buffering = false;
                 playing = true;
-                execEvent(events, 'playing');
+
+                if (that.play_back_dfd && !that.is_buffering) {
+                    that.play_back_dfd.resolve(that.curr_video);
+                    execEvent(events, 'playing');
+                } else if (that.is_buffering) {
+                    that.is_buffering = false;
+                    clearTimeout(that.buffer_timer);
+                    that.buffer_timer = setTimeout(function() {
+                        that.pauseVideo();
+                        that._buffer_dfd.resolve();
+                    }, 300);
+                } else {
+                    execEvent(events, 'playing');
+                }
             };
 
             //Fires when the audio/video is playing after having been paused or stopped for buffering
             video.onplaying = function() {
                 buffering = false;
                 playing = true;
-                execEvent(events, 'playing');
+/*                execEvent(events, 'playing');
+
+                if (that.play_back_dfd && !that.is_buffering)
+                    that.play_back_dfd.resolve(that.curr_video);
+                else if (that.is_buffering) {
+                    clearTimeout(that.buffer_timer);
+                    that.pauseVideo();
+                }*/
             };
 
             //Fires when the browser is downloading the audio/video
@@ -222,6 +253,7 @@ module.exports = (function() {
                 if (!video.src)
                     video.src = src;
 
+                //video.load();
                 video.play();
                 if (startSeconds) {
                     video.currentTime = startSeconds;
@@ -232,7 +264,11 @@ module.exports = (function() {
                 video.play();
             };
             this.pauseVideo = function() {
-                video.pause();
+                try {
+                    video.pause();
+                } catch (e) {
+                    console.log('[html player] Error calling pause', e);
+                }
             };
             this.seekTo = function(sec) {
                 video.currentTime = sec;
@@ -263,7 +299,11 @@ module.exports = (function() {
             this.destroy = function() {
                 events = [];
                 error_events = [];
-                elem.removeChild(video);
+                that._stopping = true;
+                video.pause();
+                //setTimeout(function() {
+                    elem.removeChild(video);
+                //}, 300);
                 elem.style.display = 'none';
                 video = null;
                 //player = null;
@@ -342,15 +382,19 @@ module.exports = (function() {
             player_dfd.resolve(player);
 
 
-            player.addEventListener('onStateChange', function(e) {
+/*            player.addEventListener('onStateChange', function(e) {
                 if (0 == e.data)
                     this.play_stop_dfd.resolve();
                 else if (1 == e.data) {
                     //TODO don't fire while buffering by bufferVideoById func
                     if (this.play_back_dfd && !this.is_buffering)
                         this.play_back_dfd.resolve(this.curr_video);
+                    else if (this.is_buffering) {
+                        clearTimeout(this.buffer_timer);
+                        this.pauseVideo();
+                    }
                 }
-            }.bind(player));
+            }.bind(player));*/
 
 
             return player_dfd.promise;
