@@ -88,13 +88,13 @@ module.exports = (function() {
         video.controls = false;
         if (params.controls)
             video.controls = params.controls;
-        
+
         var Player = function(video) {
             this.elem = elem;
 
             var buffering = false,
                 playing = false;
-            
+
             var events = [],
                 error_events = [];
 
@@ -150,7 +150,7 @@ module.exports = (function() {
             };
 
             //Fires when an error occurred during the loading of an audio/video
-            video.onerror = function() {
+            video.onerror = function(e) {
                 console.log('[html video tag event]', 'error', e);
             };
 
@@ -310,7 +310,7 @@ module.exports = (function() {
                 video = null;
                 //player = null;
             };
-            
+
             this.addEventListener = function(event, listener) {
                 if (event == 'onStateChange') {
                     events = events.concat([{
@@ -326,10 +326,10 @@ module.exports = (function() {
                 } else if (event == 'onError')
                     error_events.push(listener);
             };
-            
+
 
         };
-        
+
         return new Player(video);
     }
 
