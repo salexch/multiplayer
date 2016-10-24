@@ -151,7 +151,13 @@ module.exports = (function() {
 
             //Fires when an error occurred during the loading of an audio/video
             video.onerror = function(e) {
-                console.log('[html video tag event]', 'error', e);
+                var error_code = this.error.code;
+                console.log('[html video tag event]', 'error', this.error, e);
+                error_events.forEach(function(listener) {
+                    listener({
+                        data: error_code
+                    });
+                });
             };
 
             //Fires when the browser has loaded the current frame of the audio/video
@@ -302,7 +308,9 @@ module.exports = (function() {
                 events = [];
                 error_events = [];
                 that._stopping = true;
-                video.pause();
+                video.src = '';
+                video.removeAttribute('src');
+                //video.pause();
                 //setTimeout(function() {
                     elem.removeChild(video);
                 //}, 300);

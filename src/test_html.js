@@ -59,13 +59,13 @@
     player.loadPlaylist({
         list: [{
             id: "http://techslides.com/demos/sample-videos/small.webm",
-            api: 'html'
+            api: 'single_html_tag'
         }, /*{
             id: 'http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_720p_stereo.ogg',
             api: 'html'
         },*/{
             id: "https://permadi.com/thirdParty/videos/redcliff450.webm",
-            api: 'html'
+            api: 'single_html_tag'
         }]
 /*
         list: [{
